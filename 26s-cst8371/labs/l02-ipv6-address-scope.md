@@ -63,8 +63,8 @@ Example:
 ```text
 If your assigned value is 7:
 
-fd00:acad:U:a::/64 becomes fd00:acad:7:a::/64
-2010:acad:U:12::/64 becomes 2010:acad:7:12::/64
+fd00:acad:45:a::/64 becomes fd00:acad:7:a::/64
+2010:acad:45:12::/64 becomes 2010:acad:7:12::/64
 ```
 
 ---
@@ -93,20 +93,20 @@ fd00:acad:U:a::/64 becomes fd00:acad:7:a::/64
 
 | Device          | Interface | Network                 | IPv6 Address / Prefix   | Notes                       |
 | --------------- | --------- | ----------------------- | ----------------------- | --------------------------- |
-| R1              | Gi0/0/1   | Site A ULA LAN          | `fd00:acad:U:a::1/64`   | Site A default gateway      |
-| R1              | Gi0/0/2   | Site B ULA LAN          | `fd00:acad:U:b::1/64`   | Site B default gateway      |
-| R1              | Gi0/0/0   | R1–R2 GUA Transit       | `2010:acad:U:12::1/64`  | Transit to R2               |
-| R2              | Gi0/0/0   | R1–R2 GUA Transit       | `2010:acad:U:12::2/64`  | Transit to R1               |
-| R2              | Gi0/0/1   | R2–R3 GUA Transit       | `2010:acad:U:23::2/64`  | Transit to R3               |
-| R2              | Gi0/0/2   | External Server GUA LAN | `2010:acad:U:99::2/64`  | External server gateway     |
-| R3              | Gi0/0/0   | R2–R3 GUA Transit       | `2010:acad:U:23::3/64`  | Transit to R2               |
-| R3              | Gi0/0/1   | Site C ULA LAN          | `fd00:acad:U:c::3/64`   | Site C default gateway      |
-| R3              | Gi0/0/2   | Site D GUA LAN          | `2010:acad:U:d::3/64`   | Site D default gateway      |
-| Site A PC       | NIC       | Site A ULA LAN          | `fd00:acad:U:a::10/64`  | Gateway `fd00:acad:U:a::1`  |
-| Site B PC       | NIC       | Site B ULA LAN          | `fd00:acad:U:b::10/64`  | Gateway `fd00:acad:U:b::1`  |
-| Site C PC       | NIC       | Site C ULA LAN          | `fd00:acad:U:c::10/64`  | Gateway `fd00:acad:U:c::3`  |
-| Site D PC       | NIC       | Site D GUA LAN          | `2010:acad:U:d::10/64`  | Gateway `2010:acad:U:d::3`  |
-| External Server | NIC       | External Server GUA LAN | `2010:acad:U:99::99/64` | Gateway `2010:acad:U:99::2` |
+| R1              | Gi0/0/1   | Site A ULA LAN          | `fd00:acad:45:a::1/64`   | Site A default gateway      |
+| R1              | Gi0/0/2   | Site B ULA LAN          | `fd00:acad:45:b::1/64`   | Site B default gateway      |
+| R1              | Gi0/0/0   | R1–R2 GUA Transit       | `2010:acad:45:12::1/64`  | Transit to R2               |
+| R2              | Gi0/0/0   | R1–R2 GUA Transit       | `2010:acad:45:12::2/64`  | Transit to R1               |
+| R2              | Gi0/0/1   | R2–R3 GUA Transit       | `2010:acad:45:23::2/64`  | Transit to R3               |
+| R2              | Gi0/0/2   | External Server GUA LAN | `2010:acad:45:99::2/64`  | External server gateway     |
+| R3              | Gi0/0/0   | R2–R3 GUA Transit       | `2010:acad:45:23::3/64`  | Transit to R2               |
+| R3              | Gi0/0/1   | Site C ULA LAN          | `fd00:acad:45:c::3/64`   | Site C default gateway      |
+| R3              | Gi0/0/2   | Site D GUA LAN          | `2010:acad:45:d::3/64`   | Site D default gateway      |
+| Site A PC       | NIC       | Site A ULA LAN          | `fd00:acad:45:a::10/64`  | Gateway `fd00:acad:45:a::1`  |
+| Site B PC       | NIC       | Site B ULA LAN          | `fd00:acad:45:b::10/64`  | Gateway `fd00:acad:45:b::1`  |
+| Site C PC       | NIC       | Site C ULA LAN          | `fd00:acad:45:c::10/64`  | Gateway `fd00:acad:45:c::3`  |
+| Site D PC       | NIC       | Site D GUA LAN          | `2010:acad:45:d::10/64`  | Gateway `2010:acad:45:d::3`  |
+| External Server | NIC       | External Server GUA LAN | `2010:acad:45:99::99/64` | Gateway `2010:acad:45:99::2` |
 
 ### B3 — Link-Local Addressing Convention
 
@@ -139,8 +139,8 @@ Only configure the routes listed in this table.
 
 | Device | Purpose | Destination | Exit Interface | Next Hop | Static Route Type |
 |---|---|---|---|---|---|
-| R2 | Return path to Site D GUA LAN | `2010:acad:U:d::/64` | `Gi0/0/1` | `2010:acad:U:23::3` | Fully specified |
-| R3 | Forward path to External Server GUA LAN | `2010:acad:U:99::/64` | `Gi0/0/0` | `2010:acad:U:23::2` | Fully specified |
+| R2 | Return path to Site D GUA LAN | `2010:acad:45:d::/64` | `Gi0/0/1` | `2010:acad:45:23::3` | Fully specified |
+| R3 | Forward path to External Server GUA LAN | `2010:acad:45:99::/64` | `Gi0/0/0` | `2010:acad:45:23::2` | Fully specified |
 
 Do not configure these routes:
 
@@ -269,21 +269,21 @@ configure terminal
 interface gi0/0/1 
 description SITE-A-ULA-LAN 
 ipv6 address fe80::1 link-local 
-ipv6 address fd00:acad:U:a::1/64 
+ipv6 address fd00:acad:45:a::1/64 
 no shutdown 
 exit
 
 interface gi0/0/2 
 description SITE-B-ULA-LAN 
 ipv6 address fe80::1 link-local 
-ipv6 address fd00:acad:U:b::1/64 
+ipv6 address fd00:acad:45:b::1/64 
 no shutdown 
 exit
 
 interface gi0/0/0 
 description R1-R2-GUA-TRANSIT 
 ipv6 address fe80::1 link-local 
-ipv6 address 2010:acad:U:12::1/64 
+ipv6 address 2010:acad:45:12::1/64 
 no shutdown 
 end
 ```
@@ -307,9 +307,9 @@ show running-config interface <interface-id>
 
 | Evidence                        | Success Indicator                                                                               | Failure Signal                                                                   |
 | ------------------------------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `R1# show ipv6 interface brief` | R1 interfaces show `fe80::1`, `fd00:acad:U:a::1`, `fd00:acad:U:b::1`, and `2010:acad:U:12::1`   | R1 uses wrong interface ID, wrong prefix, or missing LLA                         |
-| `R2# show ipv6 interface brief` | R2 interfaces show `fe80::2`, `2010:acad:U:12::2`, `2010:acad:U:23::2`, and `2010:acad:U:99::2` | R2 uses `::1`, wrong transit prefix, or wrong external gateway address           |
-| `R3# show ipv6 interface brief` | R3 interfaces show `fe80::3`, `2010:acad:U:23::3`, `fd00:acad:U:c::3`, and `2010:acad:U:d::3`   | R3 uses wrong address type, wrong interface ID, or missing Site C/Site D address |
+| `R1# show ipv6 interface brief` | R1 interfaces show `fe80::1`, `fd00:acad:45:a::1`, `fd00:acad:45:b::1`, and `2010:acad:45:12::1`   | R1 uses wrong interface ID, wrong prefix, or missing LLA                         |
+| `R2# show ipv6 interface brief` | R2 interfaces show `fe80::2`, `2010:acad:45:12::2`, `2010:acad:45:23::2`, and `2010:acad:45:99::2` | R2 uses `::1`, wrong transit prefix, or wrong external gateway address           |
+| `R3# show ipv6 interface brief` | R3 interfaces show `fe80::3`, `2010:acad:45:23::3`, `fd00:acad:45:c::3`, and `2010:acad:45:d::3`   | R3 uses wrong address type, wrong interface ID, or missing Site C/Site D address |
 | Interface state                 | Required router interfaces are `up/up` or administratively enabled in Packet Tracer             | Interface is administratively down or missing from output                        |
 | Address type                    | Site A/B/C router LANs use ULA; Site D, transit, and External Server LAN use GUA                | ULA and GUA prefixes are mixed or assigned to the wrong segment                  |
 
@@ -356,11 +356,11 @@ ping <local-default-gateway>
 
 | Evidence                     | Success Indicator                   | Failure Signal                           |
 | ---------------------------- | ----------------------------------- | ---------------------------------------- |
-| Site A PC ping gateway       | Replies from `fd00:acad:U:a::1`     | Host address, prefix, or gateway wrong   |
-| Site B PC ping gateway       | Replies from `fd00:acad:U:b::1`     | Host address, prefix, or gateway wrong   |
-| Site C PC ping gateway       | Replies from `fd00:acad:U:c::3`     | Host address, prefix, or gateway wrong   |
-| Site D PC ping gateway       | Replies from `2010:acad:U:d::3`     | Host address, prefix, or gateway wrong   |
-| External Server gateway test | Server can ping `2010:acad:U:99::2` | Server address, prefix, or gateway wrong |
+| Site A PC ping gateway       | Replies from `fd00:acad:45:a::1`     | Host address, prefix, or gateway wrong   |
+| Site B PC ping gateway       | Replies from `fd00:acad:45:b::1`     | Host address, prefix, or gateway wrong   |
+| Site C PC ping gateway       | Replies from `fd00:acad:45:c::3`     | Host address, prefix, or gateway wrong   |
+| Site D PC ping gateway       | Replies from `2010:acad:45:d::3`     | Host address, prefix, or gateway wrong   |
+| External Server gateway test | Server can ping `2010:acad:45:99::2` | Server address, prefix, or gateway wrong |
 
 #### C03 — Collection of Information
 
@@ -371,11 +371,11 @@ ping <local-default-gateway>
 Paste:
 
 ```plaintext
-Site A PC> ping fd00:acad:U:a::1
-Site B PC> ping fd00:acad:U:b::1
-Site C PC> ping fd00:acad:U:c::3
-Site D PC> ping 2010:acad:U:d::3
-External Server> ping 2010:acad:U:99::2
+Site A PC> ping fd00:acad:45:a::1
+Site B PC> ping fd00:acad:45:b::1
+Site C PC> ping fd00:acad:45:c::3
+Site D PC> ping 2010:acad:45:d::3
+External Server> ping 2010:acad:45:99::2
 ```
 
 Add a comment line:
@@ -460,7 +460,7 @@ ULA boundary = routing-policy / administrative boundary.
 
 ```
 configure terminal
-ipv6 route 2010:acad:U:d::/64 2010:acad:U:23::3
+ipv6 route 2010:acad:45:d::/64 2010:acad:45:23::3
 end
 ```
 
@@ -468,9 +468,9 @@ end
 - [ ] Do not configure static routes on R1.
 - [ ] Do not configure a default route on R1, R2, or R3.
 - [ ] Do not configure routes for these ULA prefixes on R2:
-	- `fd00:acad:U:a::/64`
-	- `fd00:acad:U:b::/64`
-	- `fd00:acad:U:c::/64`
+	- `fd00:acad:45:a::/64`
+	- `fd00:acad:45:b::/64`
+	- `fd00:acad:45:c::/64`
 
 #### Verification
 
@@ -482,13 +482,13 @@ show ipv6 route
 
 | Evidence                                  | Success Indicator                                                   | Failure Signal                    |
 | ----------------------------------------- | ------------------------------------------------------------------- | --------------------------------- |
-| `R2# show ipv6 route`                     | Static route to `2010:acad:U:d::/64` via `2010:acad:U:23::3`        | Missing route to Site D           |
-| `R3# show ipv6 route 2010:acad:U:99::/64` | Static route to `2010:acad:U:99::/64` via `2010:acad:U:23::2`       | Missing route to External Server  |
+| `R2# show ipv6 route`                     | Static route to `2010:acad:45:d::/64` via `2010:acad:45:23::3`        | Missing route to Site D           |
+| `R3# show ipv6 route 2010:acad:45:99::/64` | Static route to `2010:acad:45:99::/64` via `2010:acad:45:23::2`       | Missing route to External Server  |
 | `R1# show ipv6 route summary`             | No static routes - only a total of 7 routes 3 connected and 4 local | R1 has an unintended static route |
 | `R1# show ipv6 route ::/0`                | No default route                                                    | Default route exists              |
-| `R2# show ipv6 route fd00:acad:U:a::/64`  | No route found                                                      | ULA route exists on R2            |
-| `R2# show ipv6 route fd00:acad:U:b::/64`  | No route found                                                      | ULA route exists on R2            |
-| `R2# show ipv6 route fd00:acad:U:c::/64`  | No route found                                                      | ULA route exists on R2            |
+| `R2# show ipv6 route fd00:acad:45:a::/64`  | No route found                                                      | ULA route exists on R2            |
+| `R2# show ipv6 route fd00:acad:45:b::/64`  | No route found                                                      | ULA route exists on R2            |
+| `R2# show ipv6 route fd00:acad:45:c::/64`  | No route found                                                      | ULA route exists on R2            |
 
 
 #### C05 — Collection of Information
@@ -502,10 +502,10 @@ Paste:
 ```
 R1# show ipv6 route summary
 R2# show ipv6 route
-R3# show ipv6 route 2010:acad:U:99::/64
-R2# show ipv6 route fd00:acad:U:a::/64  
-R2# show ipv6 route fd00:acad:U:b::/64  
-R2# show ipv6 route fd00:acad:U:c::/64
+R3# show ipv6 route 2010:acad:45:99::/64
+R2# show ipv6 route fd00:acad:45:a::/64  
+R2# show ipv6 route fd00:acad:45:b::/64  
+R2# show ipv6 route fd00:acad:45:c::/64
 ```
 
 Add one comment line:
@@ -538,12 +538,12 @@ ping <destination-ipv6-address>
 
 | Test ID | Source    | Destination          | Expected Result | Failure Signal                                                                    |
 | ------- | --------- | -------------------- | --------------- | --------------------------------------------------------------------------------- |
-| T1      | Site A PC | `fd00:acad:U:b::10`  | Success         | Site A/B addressing or R1 interface issue                                         |
-| T2      | Site A PC | `2010:acad:U:99::99` | Fail            | If success occurs, R1 has unintended route/default route                          |
-| T3      | Site A PC | `fd00:acad:U:c::10`  | Fail            | If success occurs, extra ULA route exists                                         |
-| T4      | Site C PC | `2010:acad:U:d::10`  | Fail            | If success occurs, Site C boundary policy is missing or not applied               |
-| T5      | Site C PC | `2010:acad:U:99::99` | Fail            | If success occurs, Site C boundary policy or external return-path design is wrong |
-| T6      | Site D PC | `2010:acad:U:99::99` | Success         | Site D route, R2 return route, or host gateway issue                              |
+| T1      | Site A PC | `fd00:acad:45:b::10`  | Success         | Site A/B addressing or R1 interface issue                                         |
+| T2      | Site A PC | `2010:acad:45:99::99` | Fail            | If success occurs, R1 has unintended route/default route                          |
+| T3      | Site A PC | `fd00:acad:45:c::10`  | Fail            | If success occurs, extra ULA route exists                                         |
+| T4      | Site C PC | `2010:acad:45:d::10`  | Fail            | If success occurs, Site C boundary policy is missing or not applied               |
+| T5      | Site C PC | `2010:acad:45:99::99` | Fail            | If success occurs, Site C boundary policy or external return-path design is wrong |
+| T6      | Site D PC | `2010:acad:45:99::99` | Success         | Site D route, R2 return route, or host gateway issue                              |
 
 #### C06 — Collection of Information
 
@@ -554,12 +554,12 @@ ping <destination-ipv6-address>
 Paste:
 
 ```plaintext
-Site A PC> ping fd00:acad:U:b::10  
-Site A PC> ping 2010:acad:U:99::99  
-Site A PC> ping fd00:acad:U:c::10  
-Site C PC> ping 2010:acad:U:d::10  
-Site C PC> ping 2010:acad:U:99::99  
-Site D PC> ping 2010:acad:U:99::99
+Site A PC> ping fd00:acad:45:b::10  
+Site A PC> ping 2010:acad:45:99::99  
+Site A PC> ping fd00:acad:45:c::10  
+Site C PC> ping 2010:acad:45:d::10  
+Site C PC> ping 2010:acad:45:99::99  
+Site D PC> ping 2010:acad:45:99::99
 ```
 
 Add a comment line:

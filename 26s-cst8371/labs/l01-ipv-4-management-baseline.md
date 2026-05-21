@@ -55,16 +55,16 @@ By the end of this lab, you should be able to:
 
 | Device      | Interface  | Network        | IP/Mask              | Notes                        |
 | ----------- | ---------- | -------------- | -------------------- | ---------------------------- |
-| **CORE**    | G0/0/0     | 10.U.1.0/28    | **10.U.1.2/28**      | PC LAN — default gateway     |
-| **CORE**    | G0/0/2     | 10.U.2.0/26    | **10.U.2.2/26**      | VM LAN — default gateway     |
-| **CORE**    | G0/0/1     | 198.18.U.0/29  | **198.18.U.2/29**    | To EDGE (internal link)      |
-| **CORE**    | LoopbackU  | 10.U.3.0/24    | **10.U.3.2/24**      | Loopback for tests/router-ID |
-| **EDGE**    | G0/0/1     | 198.18.U.0/29  | **198.18.U.1/29**    | To CORE (internal link)      |
-| **EDGE**    | G0/0/0     | 203.0.113.0/24 | **203.0.113.U/24**   | To REMOTE network            |
+| **CORE**    | G0/0/0     | 10.45.1.0/28    | **10.45.1.2/28**      | PC LAN — default gateway     |
+| **CORE**    | G0/0/2     | 10.45.2.0/26    | **10.45.2.2/26**      | VM LAN — default gateway     |
+| **CORE**    | G0/0/1     | 198.18.45.0/29  | **198.18.45.2/29**    | To EDGE (internal link)      |
+| **CORE**    | LoopbackU  | 10.45.3.0/24    | **10.45.3.2/24**      | Loopback for tests/router-ID |
+| **EDGE**    | G0/0/1     | 198.18.45.0/29  | **198.18.45.1/29**    | To CORE (internal link)      |
+| **EDGE**    | G0/0/0     | 203.0.113.0/24 | **203.0.113.45/24**   | To REMOTE network            |
 | **REMOTE**  | —          | 203.0.113.0/24 | **203.0.113.254/24** | Remote gateway (given)       |
 | **Servers** | —          | 192.0.2.0/24   | —                    | Reachable via REMOTE         |
-| **PC**      | NIC        | 10.U.1.0/28    | **10.U.1.10/28**     | DG = 10.U.1.2                |
-| **VM**      | NIC        | 10.U.2.0/26    | **10.U.2.10/26**     | DG = 10.U.2.2                |
+| **PC**      | NIC        | 10.45.1.0/28    | **10.45.1.10/28**     | DG = 10.45.1.2                |
+| **VM**      | NIC        | 10.45.2.0/26    | **10.45.2.10/26**     | DG = 10.45.2.2                |
 > Replace `U` with your assigned number.
 
 ### B3 - Network Roles
@@ -82,12 +82,12 @@ By the end of this lab, you should be able to:
 | Device | Route Purpose | Destination | Next Hop |
 |---|---|---|---|
 | EDGE | Default route to REMOTE | `0.0.0.0/0` | `203.0.113.254` |
-| EDGE | Summary route to internal CORE networks | `10.U.0.0/16` | `198.18.U.2` |
-| CORE | Default route to EDGE | `0.0.0.0/0` | `198.18.U.1` |
-| REMOTE | Return route to student `198.18.U.0` space | `198.18.U.0/24` | `203.0.113.U` |
-| REMOTE | Return route to student internal `10.U.0.0` space | `10.U.0.0/16` | `203.0.113.U` |
+| EDGE | Summary route to internal CORE networks | `10.45.0.0/16` | `198.18.45.2` |
+| CORE | Default route to EDGE | `0.0.0.0/0` | `198.18.45.1` |
+| REMOTE | Return route to student `198.18.45.0` space | `198.18.45.0/24` | `203.0.113.45` |
+| REMOTE | Return route to student internal `10.45.0.0` space | `10.45.0.0/16` | `203.0.113.45` |
 
-The `198.18.U.0/24` route on REMOTE is intentional. Each student uses a subnet inside that `/24`; REMOTE uses the `/24` summary to return traffic to each student’s assigned space through EDGE.
+The `198.18.45.0/24` route on REMOTE is intentional. Each student uses a subnet inside that `/24`; REMOTE uses the `/24` summary to return traffic to each student’s assigned space through EDGE.
 
 ### B5 - Management Plane Model
 
@@ -95,7 +95,7 @@ The `198.18.U.0/24` route on REMOTE is intentional. Each student uses a subnet i
 |---|---|
 | SSH | SSHv2 only on VTY lines; local admin account |
 | NTP | EDGE acts as local NTP master at stratum 4; CORE synchronizes to EDGE |
-| Syslog | CORE and EDGE send logs to the VM/server at `10.U.2.10` |
+| Syslog | CORE and EDGE send logs to the VM/server at `10.45.2.10` |
 | CDP | CDP remains enabled so CORE–EDGE neighbour evidence can be verified |
 
 ---
@@ -193,23 +193,23 @@ Add these comment lines after collecting the commands:
 ### C2 - Task 2 — Static Routing (baseline reachability)
 
 - [ ] On **EDGE**: install a **fully specified default route** **to REMOTE** (via `203.0.113.254`).
-- [ ] On **CORE**: install a **fully specified default route** **to EDGE** (via `198.18.U.1`).
+- [ ] On **CORE**: install a **fully specified default route** **to EDGE** (via `198.18.45.1`).
 - [ ] On **EDGE**: install a **fully specified summary route** for **all internal networks** behind CORE.
 
 **Why the summary on EDGE?**  
 EDGE must reach three internal networks that sit behind CORE:
-- PC LAN `10.U.1.0/28`, VM LAN `10.U.2.0/26`, and LoopbackU `10.U.3.0/24`.  
-A single summary **`10.U.0.0/16`** covers all of them → fewer routes, same reachability.
+- PC LAN `10.45.1.0/28`, VM LAN `10.45.2.0/26`, and LoopbackU `10.45.3.0/24`.  
+A single summary **`10.45.0.0/16`** covers all of them → fewer routes, same reachability.
 
 **Commands (replace `U` and interfaces to match your diagram):**
 ```plaintext
 ! ----- EDGE -----
 ip route 0.0.0.0 0.0.0.0 exit-if 203.0.113.254 
-ip route 10.U.0.0 255.255.0.0 exit-if 198.18.U.2
+ip route 10.45.0.0 255.255.0.0 exit-if 198.18.45.2
 
 
 ! ----- CORE -----
-ip route 0.0.0.0 0.0.0.0 exit-if 198.18.U.1
+ip route 0.0.0.0 0.0.0.0 exit-if 198.18.45.1
 ```
 
 #### Verification
@@ -229,7 +229,7 @@ tracert 192.0.2.69
 From EDGE:
 
 ```plaintext
-ping 10.U.2.10 source g0/0/1
+ping 10.45.2.10 source g0/0/1
 ```
 
 Use the source option so the test validates the route path from EDGE’s internal side toward the VM/server LAN. If your physical interface name differs, replace `g0/0/1` with the actual CORE-facing interface.
@@ -238,10 +238,10 @@ Use the source option so the test validates the route path from EDGE’s interna
 
 | Evidence                    | Success Indicator                                                    | Failure Signal                                                     |
 | --------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| EDGE `show ip route static` | `S* 0.0.0.0/0` via `203.0.113.254`; `S 10.U.0.0/16` via `198.18.U.2` | Missing default route, wrong summary, wrong next hop               |
-| CORE `show ip route static` | `S* 0.0.0.0/0` via `198.18.U.1`                                      | Missing default route, wrong EDGE next hop                         |
+| EDGE `show ip route static` | `S* 0.0.0.0/0` via `203.0.113.254`; `S 10.45.0.0/16` via `198.18.45.2` | Missing default route, wrong summary, wrong next hop               |
+| CORE `show ip route static` | `S* 0.0.0.0/0` via `198.18.45.1`                                      | Missing default route, wrong EDGE next hop                         |
 | PC `tracert 192.0.2.69`     | Path reaches remote service network                                  | Trace stops early, wrong path, repeated timeouts                   |
-| EDGE source ping            | Replies from `10.U.2.10`                                             | Timeout, unreachable, wrong source interface, missing return route |
+| EDGE source ping            | Replies from `10.45.2.10`                                             | Timeout, unreachable, wrong source interface, missing return route |
 
 #### 🔍 C02 — Collection of Information
 
@@ -259,7 +259,7 @@ show ip route static
 
 # Connectivity tests
 # -- EDGE
-ping 10.U.2.10 source  g0/0/1
+ping 10.45.2.10 source  g0/0/1
 # -- PC
 PC> tracert 192.0.2.69                   # TFTP server behind REMOTE (end-to-end)
 ```
@@ -290,7 +290,7 @@ From the PC, SSH into CORE.
 Example:
 
 ```plaintext
-PC> ssh -l admin 198.18.U.2
+PC> ssh -l admin 198.18.45.2
 ```
 
 Use the router IP assigned in your topology. After login, remain in the SSH session.
@@ -356,7 +356,7 @@ ntp master 4                           ! serve as stratum-4 master
 
 ! ----- CORE -----
 # On global configuration
-ntp server 198.18.U.1                  ! EDGE's CORE-facing IP
+ntp server 198.18.45.1                  ! EDGE's CORE-facing IP
 ```
 
 **Tip:** NTP may take ~10–60s to show as reachable/selected. 
@@ -381,7 +381,7 @@ show ntp associations
 | Evidence | Success Indicator | Failure Signal |
 |---|---|---|
 | EDGE `show ntp status` | Clock synchronized, stratum 4, local master reference | EDGE clock unsynchronized or wrong stratum |
-| CORE `show ntp status` | Clock synchronized, stratum 5, reference is EDGE `198.18.U.1` | CORE unsynchronized, wrong reference, wrong stratum |
+| CORE `show ntp status` | Clock synchronized, stratum 5, reference is EDGE `198.18.45.1` | CORE unsynchronized, wrong reference, wrong stratum |
 
 #### 🔍 C04 — Collection of Information
 
@@ -412,7 +412,7 @@ Add these comment lines after collecting the commands:
 On CORE and EDGE:
 
 ```plaintext
-logging host 10.U.1.10                       ! PC IP
+logging host 10.45.1.10                       ! PC IP
 ```
 
 To generate test events, `shutdown /no shutdown` an interface or do a single `login on-success` via console/VTY.  
@@ -435,7 +435,7 @@ Confirm entries appear from CORE and EDGE.
 
 | Evidence                                  | Success Indicator                                 | Failure Signal                                                   |
 | ----------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------- |
-| `show running-config include \| ^logging` | `logging host 10.U.1.10` appears on CORE and EDGE | Missing logging host or wrong server IP                          |
+| `show running-config include \| ^logging` | `logging host 10.45.1.10` appears on CORE and EDGE | Missing logging host or wrong server IP                          |
 | Syslog server observation                 | Entries visible from CORE and EDGE                | No messages visible, Syslog service off, route to server missing |
 
 
@@ -622,7 +622,7 @@ Ensure devices are in a ready state for the next lab:
 
 ## D6 — Lab Book Documentation
 
-Your lab book is your working technical record. It is not a replacement for the submitted evidence file.Use one open notebook spread for this lab.
+Your lab book is your working technical record. It is not a replacement for the submitted evidence file.45se one open notebook spread for this lab.
 
 ```text
 LEFT PAGE  = Pre-lab command map
