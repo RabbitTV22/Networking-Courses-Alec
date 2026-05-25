@@ -21,7 +21,7 @@ You’ll observe how hosts learn prefixes and default gateways from **Router Adv
 
 - [ ] Configure EDGE IPv6 addressing.
 - [ ] Keep the remote-facing link shut down until the final submission step.
-- [ ] Set the VM MAC address to `02:00:00:00:U:09`.
+- [ ] Set the VM MAC address to `02:00:00:00:45:09`.
 - [ ] Trigger and observe RS/RA behaviour.
 - [ ] Capture EDGE log evidence for RA/RS.
 - [ ] Generate NS/NA traffic and observe neighbour cache states.
@@ -77,12 +77,12 @@ Connect the PC only in C04 when instructed.
 | -------------- | ----------------------- | ---------- | ---------------------- | ------------------------------------- |
 | TFTP Server    | server NIC              | Server LAN | `2001:db8:192::69/64`  | Submission target                     |
 | Remote gateway | remote-facing interface | Transit    | `2001:fab:203::254/64` | Next hop toward TFTP server           |
-| EDGE           | `GigabitEthernet0/0/0`  | Transit    | `2001:fab:203::U/64`   | Keep shut down until final submission |
-| EDGE           | `GigabitEthernet0/0/0`  | Transit    | `fe80::U`              | Link-local                            |
-| EDGE           | `GigabitEthernet0/0/1`  | VM LAN     | `2010:acad:U:aa::U/64` | RA source                             |
-| EDGE           | `GigabitEthernet0/0/1`  | VM LAN     | `fe80::U`              | Default router learned by VM          |
+| EDGE           | `GigabitEthernet0/0/0`  | Transit    | `2001:fab:203::45/64`   | Keep shut down until final submission |
+| EDGE           | `GigabitEthernet0/0/0`  | Transit    | `fe80::45`              | Link-local                            |
+| EDGE           | `GigabitEthernet0/0/1`  | VM LAN     | `2010:acad:45:aa::45/64` | RA source                             |
+| EDGE           | `GigabitEthernet0/0/1`  | VM LAN     | `fe80::45`              | Default router learned by VM          |
 | VM             | `eth0`                  | VM LAN     | SLAAC-generated        | Learned from EDGE RA                  |
-| VM             | `eth0`                  | VM LAN     | `02:00:00:00:U:09`     | Forced MAC pattern                    |
+| VM             | `eth0`                  | VM LAN     | `02:00:00:00:45:09`     | Forced MAC pattern                    |
 | PC             | NIC                     | VM LAN     | Automatic IPv6         | Connect only in C04                   |
 
 ### B3 — Service Model
@@ -163,7 +163,7 @@ show ipv6 int gi0/0/1
 | Evidence                           | Success Indicator                                         | Failure Signal                  |
 | ---------------------------------- | --------------------------------------------------------- | ------------------------------- |
 | `show run \| include ipv6 unicast` | `ipv6 unicast-routing` appears                            | No output                       |
-| `show ipv6 interface brief`        | `Gi0/0/1` is up/up with `FE80::U` and `2010:ACAD:U:AA::U` | LAN address missing or wrong    |
+| `show ipv6 interface brief`        | `Gi0/0/1` is up/up with `FE80::45` and `2010:ACAD:45:AA::45` | LAN address missing or wrong    |
 | `show ipv6 int gi0/0/1`            | ND is enabled and hosts use stateless autoconfig          | ND suppressed or interface down |
 | `show ipv6 interface brief`        | `Gi0/0/0` is down/down until final step                   | Transit link enabled too early  |
 #### C01 — Collection of Information
@@ -234,7 +234,7 @@ VM GUA: 2010:acad:100:aa:0:ff:fe00:9909/64
 
 ```bash
 ip link set dev eth0 down
-ip link set dev eth0 address 02:00:00:00:U:09
+ip link set dev eth0 address 02:00:00:00:45:09
 ip -6 addr flush dev eth0 scope global
 ip link set dev eth0 up
 sleep 5
@@ -290,7 +290,7 @@ show logging | include ICMPv6-ND|Received RS|Sending solicited RA|Sending RA|sen
 | EDGE log | `Sending solicited RA` | No solicited RA line |
 | EDGE log | `Sending RA ... to FF02::1` | No RA sent to all-nodes multicast |
 | EDGE log | `MTU = 1500` | MTU option missing |
-| EDGE log | `prefix 2010:ACAD:U:AA::/64 [LA]` | Prefix line missing or wrong |
+| EDGE log | `prefix 2010:ACAD:45:AA::/64 [LA]` | Prefix line missing or wrong |
 
 Expected log pattern:
 
@@ -373,13 +373,13 @@ debug ipv6 nd
 
 ```bash
 ip -6 neigh flush dev eth0
-ping -6 -c 2 2010:acad:U:aa::U
+ping -6 -c 2 2010:acad:45:aa::45
 ```
 
 - [ ] Wait 5 seconds, then send link-local traffic:
 
 ```bash
-ping -6 -c 2 fe80::U%eth0
+ping -6 -c 2 fe80::45%eth0
 ```
 
 - [ ] Wait long enough to observe state movement:
@@ -417,18 +417,18 @@ If `show ipv6 neighbors` shows `STALE` instead of `REACH`, ping again from VM an
 Expected log pattern:
 
 ```text
-ICMPv6-ND: (GigabitEthernet0/0/1,2010:ACAD:U:AA::U) Received NS from 2010:ACAD:U:AA:0:FF:FE00:9909
-ICMPv6-ND: (GigabitEthernet0/0/1,2010:ACAD:U:AA::U) Sending NA to 2010:ACAD:U:AA:0:FF:FE00:9909
-ICMPv6-ND: (GigabitEthernet0/0/1,2010:ACAD:U:AA:0:FF:FE00:9909) STALE -> DELAY
-ICMPv6-ND: (GigabitEthernet0/0/1,2010:ACAD:U:AA:0:FF:FE00:9909) DELAY -> PROBE
-ICMPv6-ND: (GigabitEthernet0/0/1,2010:ACAD:U:AA:0:FF:FE00:9909) PROBE -> REACH
+ICMPv6-ND: (GigabitEthernet0/0/1,2010:ACAD:45:AA::45) Received NS from 2010:ACAD:45:AA:0:FF:FE00:9909
+ICMPv6-ND: (GigabitEthernet0/0/1,2010:ACAD:45:AA::45) Sending NA to 2010:ACAD:45:AA:0:FF:FE00:9909
+ICMPv6-ND: (GigabitEthernet0/0/1,2010:ACAD:45:AA:0:FF:FE00:9909) STALE -> DELAY
+ICMPv6-ND: (GigabitEthernet0/0/1,2010:ACAD:45:AA:0:FF:FE00:9909) DELAY -> PROBE
+ICMPv6-ND: (GigabitEthernet0/0/1,2010:ACAD:45:AA:0:FF:FE00:9909) PROBE -> REACH
 ```
 
 Expected neighbour pattern:
 
 ```text
 IPv6 Address                              Age Link-layer Addr State Interface
-2010:ACAD:U:AA:0:FF:FE00:9909              0 0200.0000.9909  REACH Gi0/0/1
+2010:ACAD:45:AA:0:FF:FE00:9909              0 0200.0000.9909  REACH Gi0/0/1
 FE80::FF:FE00:9909                         0 0200.0000.9909  REACH Gi0/0/1
 ```
 
@@ -476,7 +476,7 @@ Add one comment line:
 - [ ] On VM, add the duplicate address. Replace `U` with your assigned value.
 
 ```bash
-ip -6 addr add 2010:acad:U:aa::U/64 dev eth0
+ip -6 addr add 2010:acad:45:aa::45/64 dev eth0
 sleep 5
 ```
 
@@ -504,24 +504,24 @@ ip -6 addr show dev eth0
 
 | Evidence | Success Indicator | Failure Signal |
 |---|---|---|
-| EDGE log | DAD attempt detected for `2010:ACAD:U:AA::U` | No DAD evidence |
+| EDGE log | DAD attempt detected for `2010:ACAD:45:AA::45` | No DAD evidence |
 | EDGE log | EDGE sends NA in response to DAD NS | No NA response |
 | VM address output | Duplicate GUA appears as `dadfailed tentative` | Duplicate address appears usable |
-| EDGE address | EDGE still owns `2010:acad:U:aa::U/64` | EDGE address was modified |
+| EDGE address | EDGE still owns `2010:acad:45:aa::45/64` | EDGE address was modified |
 
 Expected EDGE log pattern:
 
 ```text
-ICMPv6-ND: (GigabitEthernet0/0/1,2010:ACAD:U:AA::U) Received NS from ::
-ICMPv6-ND: (GigabitEthernet0/0/1,2010:ACAD:U:AA::U) Sending NA to FF02::1
-%IPV6_ND-6-DUPLICATE_INFO: DAD attempt detected for 2010:ACAD:U:AA::U on GigabitEthernet0/0/1
+ICMPv6-ND: (GigabitEthernet0/0/1,2010:ACAD:45:AA::45) Received NS from ::
+ICMPv6-ND: (GigabitEthernet0/0/1,2010:ACAD:45:AA::45) Sending NA to FF02::1
+%IPV6_ND-6-DUPLICATE_INFO: DAD attempt detected for 2010:ACAD:45:AA::45 on GigabitEthernet0/0/1
 ```
 
 Expected VM output pattern:
 
 ```text
-inet6 2010:acad:U:aa::U/64 scope global dadfailed tentative
-inet6 2010:acad:U:aa:0:ff:fe00:9909/64 scope global dynamic
+inet6 2010:acad:45:aa::45/64 scope global dadfailed tentative
+inet6 2010:acad:45:aa:0:ff:fe00:9909/64 scope global dynamic
 inet6 fe80::ff:fe00:9909/64 scope link
 ```
 
@@ -560,7 +560,7 @@ Add one comment line:
 - [ ] On VM, remove the duplicate address. Replace `U` with your assigned value.
 
 ```bash
-ip -6 addr del 2010:acad:U:aa::U/64 dev eth0
+ip -6 addr del 2010:acad:45:aa::45/64 dev eth0
 ```
 
 - [ ] On EDGE, enable the remote-facing interface.
@@ -588,9 +588,9 @@ ping -c 2 2001:db8:192::69
 
 | Evidence         | Success Indicator                               | Failure Signal                          |
 | ---------------- | ----------------------------------------------- | --------------------------------------- |
-| VM MAC           | `02:00:00:00:U:09` appears                      | MAC changed or reset                    |
+| VM MAC           | `02:00:00:00:45:09` appears                      | MAC changed or reset                    |
 | VM address       | SLAAC GUA remains and duplicate address is gone | `dadfailed tentative` duplicate remains |
-| VM route         | Default route via `fe80::U` appears             | Default route missing                   |
+| VM route         | Default route via `fe80::45` appears             | Default route missing                   |
 | Ping TFTP server | `2 packets received`, `0% packet loss`          | Ping fails                              |
 
 #### C05 — Collection of Information
