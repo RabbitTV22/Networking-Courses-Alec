@@ -59,20 +59,20 @@ Required services:  SSH, IPv6 routing, TFTP reachability
 
 | Device      | Interface                | Network       | GUA / Prefix           | LLA            | Notes                    |
 | ----------- | ------------------------ | ------------- | ---------------------- | -------------- | ------------------------ |
-| PC-A        | NIC                      | LAN-A         | `2010:acad:U:a::10/64` | Auto-generated | End device               |
-| CORE        | Gi0/0/10                 | LAN-A         | `2010:acad:U:a::2/64`  | `fe80::2`      | PC-A gateway             |
-| Alpine      | NIC                      | SITE-B        | `2010:acad:U:b::20/64` | Auto-generated | End device               |
-| CORE        | Gi0/0/20                 | SITE-B        | `2010:acad:U:b::2/64`  | `fe80::2`      | Alpine gateway           |
-| CORE        | Gi0/0/12                 | PRIMARY       | `2010:acad:U:12::2/64` | `fe80::2`      | PRIMARY link to RU       |
-| RU          | Gi0/0/1                  | PRIMARY       | `2010:acad:U:12::U/64` | `fe80::U`      | PRIMARY link to CORE     |
-| CORE        | Gi0/0/21                 | SECONDARY     | `2010:acad:U:21::2/64` | `fe80::2`      | SECONDARY link to RU     |
-| RU          | Gi0/0/2                  | SECONDARY     | `2010:acad:U:21::U/64` | `fe80::U`      | SECONDARY link to CORE   |
-| RU          | Gi0/0/0                  | REMOTE-UPLINK | `2001:fab:203::U/64`   | `fe80::U`      | Link to RemoteSw         |
+| PC-A        | NIC                      | LAN-A         | `2010:acad:45:a::10/64` | Auto-generated | End device               |
+| CORE        | Gi0/0/10                 | LAN-A         | `2010:acad:45:a::2/64`  | `fe80::2`      | PC-A gateway             |
+| Alpine      | NIC                      | SITE-B        | `2010:acad:45:b::20/64` | Auto-generated | End device               |
+| CORE        | Gi0/0/20                 | SITE-B        | `2010:acad:45:b::2/64`  | `fe80::2`      | Alpine gateway           |
+| CORE        | Gi0/0/12                 | PRIMARY       | `2010:acad:45:12::2/64` | `fe80::2`      | PRIMARY link to RU       |
+| RU          | Gi0/0/1                  | PRIMARY       | `2010:acad:45:12::45/64` | `fe80::45`      | PRIMARY link to CORE     |
+| CORE        | Gi0/0/21                 | SECONDARY     | `2010:acad:45:21::2/64` | `fe80::2`      | SECONDARY link to RU     |
+| RU          | Gi0/0/2                  | SECONDARY     | `2010:acad:45:21::45/64` | `fe80::45`      | SECONDARY link to CORE   |
+| RU          | Gi0/0/0                  | REMOTE-UPLINK | `2001:fab:203::45/64`   | `fe80::45`      | Link to RemoteSw         |
 | RemoteSw    | Student-facing interface | REMOTE-UPLINK | `2001:fab:203::254/64` | Existing       | Remote gateway           |
 | TFTP Server | NIC                      | TFTP-NET      | `2001:db8:192::69/64`  | Existing       | Final remote destination |
 
 >Operational note:
->RU uses host ID `::U` for all RU addresses.
+>RU uses host ID `::45` for all RU addresses.
 >CORE uses host ID `::2` for all CORE addresses.
 
 ### B3 — Network Roles
@@ -90,14 +90,14 @@ Required services:  SSH, IPv6 routing, TFTP reachability
 
 | Device | Purpose | Destination / Service | Next Hop / Target |
 |---|---|---|---|
-| CORE | Primary default route | `::/0` | RU PRIMARY global address `2010:acad:U:12::U` |
+| CORE | Primary default route | `::/0` | RU PRIMARY global address `2010:acad:45:12::45` |
 | CORE | Floating default route | `::/0` | RU SECONDARY link-local address, fully specified with CORE SECONDARY interface |
 | RU | Remote default route | `::/0` | RemoteSw `2001:fab:203::254` |
-| RU | Primary student summary return route | `2010:acad:U::/48` | CORE PRIMARY global address `2010:acad:U:12::2` |
-| RU | Floating student summary return route | `2010:acad:U::/48` | CORE SECONDARY link-local address, fully specified with RU SECONDARY interface |
-| RemoteSw | Existing return route | `2010:acad:U::/48` | RU remote-facing address `2001:fab:203::U` |
-| PC-A | Default gateway | `::/0` | CORE LAN-A address `2010:acad:U:a::2` |
-| Alpine | Default gateway | `::/0` | CORE SITE-B address `2010:acad:U:b::2` |
+| RU | Primary student summary return route | `2010:acad:45::/48` | CORE PRIMARY global address `2010:acad:45:12::2` |
+| RU | Floating student summary return route | `2010:acad:45::/48` | CORE SECONDARY link-local address, fully specified with RU SECONDARY interface |
+| RemoteSw | Existing return route | `2010:acad:45::/48` | RU remote-facing address `2001:fab:203::45` |
+| PC-A | Default gateway | `::/0` | CORE LAN-A address `2010:acad:45:a::2` |
+| Alpine | Default gateway | `::/0` | CORE SITE-B address `2010:acad:45:b::2` |
 
 ### B5 — Management Plane / Service Model
 
@@ -121,7 +121,7 @@ Required services:  SSH, IPv6 routing, TFTP reachability
 - [ ] From PC-A, SSH into CORE using:
 
 ```
-ssh <username>@2010:acad:U:a::2
+ssh <username>@2010:acad:45:a::2
 ```
 
 >**L3 switch note**:
@@ -193,7 +193,7 @@ Add one comment line:
 ```plaintext
 Primary route:
 - Destination: ::/0
-- Next hop: RU PRIMARY global address 2010:acad:U:12::U
+- Next hop: RU PRIMARY global address 2010:acad:45:12::45
 - Administrative distance: default
 - Requirement: configure this as a recursive static route using only the next-hop GUA. Do not include the outgoing interface.
 
@@ -213,13 +213,13 @@ Remote default route:
 - Next hop: RemoteSw 2001:fab:203::254
 
 Primary student summary return route:
-- Destination: 2010:acad:U::/48
-- Next hop: CORE PRIMARY global address 2010:acad:U:12::2
+- Destination: 2010:acad:45::/48
+- Next hop: CORE PRIMARY global address 2010:acad:45:12::2
 - Administrative distance: default
 - Requirement: configure this as a recursive static route using only the next-hop GUA. Do not include the outgoing interface.
 
 Floating student summary return route:
-- Destination: 2010:acad:U::/48
+- Destination: 2010:acad:45::/48
 - Next hop: CORE SECONDARY link-local address
 - Outgoing interface: RU SECONDARY interface
 - Administrative distance: 200
@@ -238,8 +238,8 @@ show ipv6 route 2001:db8:192::69
 
 RU:
 show run | include ipv6 route
-show ipv6 route 2010:acad:U:a::10
-show ipv6 route 2010:acad:U:b::20
+show ipv6 route 2010:acad:45:a::10
+show ipv6 route 2010:acad:45:b::20
 show ipv6 route 2001:db8:192::69
 ```
 
@@ -247,9 +247,9 @@ show ipv6 route 2001:db8:192::69
 
 | Evidence                                        | Success Indicator                                            | Failure Signal                                  |
 | ----------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------- |
-| `CORE# show ipv6 route 2001:db8:192::69`        | Route uses PRIMARY next hop `2010:acad:U:12::U`              | No route or SECONDARY selected before failure   |
-| `RU# show ipv6 route 2010:acad:U:a::10`         | Route matches `2010:acad:U::/48` through PRIMARY             | No matching route or wrong next hop             |
-| `RU# show ipv6 route 2010:acad:U:b::20`         | Route matches `2010:acad:U::/48` through PRIMARY             | No matching route or wrong next hop             |
+| `CORE# show ipv6 route 2001:db8:192::69`        | Route uses PRIMARY next hop `2010:acad:45:12::45`              | No route or SECONDARY selected before failure   |
+| `RU# show ipv6 route 2010:acad:45:a::10`         | Route matches `2010:acad:45::/48` through PRIMARY             | No matching route or wrong next hop             |
+| `RU# show ipv6 route 2010:acad:45:b::20`         | Route matches `2010:acad:45::/48` through PRIMARY             | No matching route or wrong next hop             |
 | `RU# show ipv6 route 2001:db8:192::69`          | Route uses RemoteSw `2001:fab:203::254`                      | No route to TFTP-NET                            |
 
 #### C02 — Collection of Information
@@ -267,8 +267,8 @@ show ipv6 route 2001:db8:192::69
 
 FROM RU:
 show run | include ipv6 route
-show ipv6 route 2010:acad:U:a::10
-show ipv6 route 2010:acad:U:b::20
+show ipv6 route 2010:acad:45:a::10
+show ipv6 route 2010:acad:45:b::20
 show ipv6 route 2001:db8:192::69
 ```
 
@@ -297,7 +297,7 @@ Add one comment line:
 From PC-A:
 
 ```plaintext
-ping 2010:acad:U:a::2
+ping 2010:acad:45:a::2
 ping 2001:db8:192::69
 tracert 2001:db8:192::69
 ```
@@ -305,7 +305,7 @@ tracert 2001:db8:192::69
 From your workstation, SSH into Alpine:
 
 ```plaintext
-ssh <alpine-username>@2010:acad:U:b::20
+ssh <alpine-username>@2010:acad:45:b::20
 ```
 
 From the Alpine SSH session:
@@ -313,7 +313,7 @@ From the Alpine SSH session:
 ```plaintext
 ip -6 addr show
 ip -6 route
-ping -6 -c 2 2010:acad:U:b::2
+ping -6 -c 2 2010:acad:45:b::2
 ping -6 -c 2 2001:db8:192::69
 traceroute6 2001:db8:192::69
 ```
@@ -322,11 +322,11 @@ traceroute6 2001:db8:192::69
 
 | Evidence                                  | Success Indicator                             | Failure Signal                    |
 | ----------------------------------------- | --------------------------------------------- | --------------------------------- |
-| `PC-A ping 2010:acad:U:a::2`              | PC-A receives replies from CORE LAN-A gateway | Request timed out or unreachable  |
+| `PC-A ping 2010:acad:45:a::2`              | PC-A receives replies from CORE LAN-A gateway | Request timed out or unreachable  |
 | `PC-A ping 2001:db8:192::69`              | PC-A receives replies from TFTP server        | Timeout                           |
 | `PC-A tracert 2001:db8:192::69`           | Path leaves PC-A through CORE and RU          | Trace stops at local gateway      |
-| `ssh <alpine-username>@2010:acad:U:b::20` | SSH login succeeds                            | SSH connection refused or timeout |
-| `Alpine ip -6 route`                      | Default route points to `2010:acad:U:b::2`    | Missing default route             |
+| `ssh <alpine-username>@2010:acad:45:b::20` | SSH login succeeds                            | SSH connection refused or timeout |
+| `Alpine ip -6 route`                      | Default route points to `2010:acad:45:b::2`    | Missing default route             |
 | `Alpine ping -6 -c 2 2001:db8:192::69`    | Alpine receives replies from TFTP server      | 100% packet loss                  |
 | `Alpine traceroute6 2001:db8:192::69`     | Path leaves Alpine through CORE and RU        | Trace stops at Alpine or CORE     |
 
@@ -339,13 +339,13 @@ traceroute6 2001:db8:192::69
 Paste:
 
 ```plaintext
-PC-A> ping 2010:acad:U:a::2
+PC-A> ping 2010:acad:45:a::2
 PC-A> ping 2001:db8:192::69
 PC-A> tracert 2001:db8:192::69
 
 Alpine$ ip -6 addr show
 Alpine$ ip -6 route
-Alpine$ ping -6 -c 4 2010:acad:U:b::2
+Alpine$ ping -6 -c 4 2010:acad:45:b::2
 Alpine$ ping -6 -c 4 2001:db8:192::69
 Alpine$ traceroute6 2001:db8:192::69
 ```
@@ -371,8 +371,8 @@ Add one comment line:
 CORE# show ipv6 interface brief
 CORE# show ipv6 route 2001:db8:192::69
 
-RU# show ipv6 route 2010:acad:U:a::10
-RU# show ipv6 route 2010:acad:U:b::20
+RU# show ipv6 route 2010:acad:45:a::10
+RU# show ipv6 route 2010:acad:45:b::20
 
 PC-A> tracert 2001:db8:192::69
 
@@ -385,8 +385,8 @@ Alpine$ traceroute6 2001:db8:192::69
 | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | `CORE# show ipv6 interface brief`        | PRIMARY interface is `administratively down/down`; SECONDARY remains `up/up`                                          | SECONDARY also down or wrong interface shut            |
 | `CORE# show ipv6 route 2001:db8:192::69` | Route now uses SECONDARY path                                                                                         | No route to TFTP server                                |
-| `RU# show ipv6 route 2010:acad:U:a::10`  | Route to LAN-A uses SECONDARY path                                                                                    | Return path still uses failed PRIMARY or route missing |
-| `RU# show ipv6 route 2010:acad:U:b::20`  | Route to SITE-B uses SECONDARY path                                                                                   | Return path still uses failed PRIMARY or route missing |
+| `RU# show ipv6 route 2010:acad:45:a::10`  | Route to LAN-A uses SECONDARY path                                                                                    | Return path still uses failed PRIMARY or route missing |
+| `RU# show ipv6 route 2010:acad:45:b::20`  | Route to SITE-B uses SECONDARY path                                                                                   | Return path still uses failed PRIMARY or route missing |
 | `PC-A> tracert 2001:db8:192::69`         | Trace reaches the TFTP server and first routed hop is CORE, then traffic proceeds through RU using the SECONDARY path | Trace stops at CORE or does not reach TFTP             |
 | `Alpine$ traceroute6 2001:db8:192::69`   | Trace reaches the TFTP server and first routed hop is CORE, then traffic proceeds through RU using the SECONDARY path | Trace stops at CORE or does not reach TFTP             |
 
@@ -402,8 +402,8 @@ Paste:
 CORE# show ipv6 interface brief
 CORE# show ipv6 route 2001:db8:192::69
 
-RU# show ipv6 route 2010:acad:U:a::10
-RU# show ipv6 route 2010:acad:U:b::20
+RU# show ipv6 route 2010:acad:45:a::10
+RU# show ipv6 route 2010:acad:45:b::20
 
 PC-A> tracert 2001:db8:192::69
 
@@ -438,8 +438,8 @@ show ipv6 route
 
 |Evidence|Success Indicator|Failure Signal|
 |---|---|---|
-|`CORE# show ipv6 route`|Default route `::/0` returns to the PRIMARY recursive next hop `2010:acad:U:12::U`|Default route still uses SECONDARY `fe80::U`, route is missing, or route has wrong next hop|
-|`RU# show ipv6 route`|Summary route `2010:acad:U::/48` returns to the PRIMARY next hop `2010:acad:U:12::2`|Summary route still uses SECONDARY `fe80::2`, route is missing, or route has wrong next hop|
+|`CORE# show ipv6 route`|Default route `::/0` returns to the PRIMARY recursive next hop `2010:acad:45:12::45`|Default route still uses SECONDARY `fe80::45`, route is missing, or route has wrong next hop|
+|`RU# show ipv6 route`|Summary route `2010:acad:45::/48` returns to the PRIMARY next hop `2010:acad:45:12::2`|Summary route still uses SECONDARY `fe80::2`, route is missing, or route has wrong next hop|
 
 #### Collection of Information
 
