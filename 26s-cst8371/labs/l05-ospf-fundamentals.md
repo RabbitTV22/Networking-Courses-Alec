@@ -19,7 +19,7 @@ The purpose of this lab is not only to make OSPF work. The purpose is to prove, 
 | Task | Command / Indicator |
 |---|---|
 | Enable OSPF on an interface | `interface <int>` → `ip ospf U area 0` |
-| Set stable Router ID | `router ospf U` → `router-id 10.U.100.x` |
+| Set stable Router ID | `router ospf U` → `router-id 10.45.100.x` |
 | Prove identity | `show ip ospf` |
 | Prove OSPF interface participation | `show ip ospf interface brief` |
 | Prove neighbours | `show ip ospf neighbor` → `FULL` |
@@ -59,19 +59,19 @@ The purpose of this lab is not only to make OSPF work. The purpose is to prove, 
 
 | Device               | Interface         | Network         | IP/Mask                  | Notes                                   |
 | -------------------- | ----------------- | --------------- | ------------------------ | --------------------------------------- |
-| EDGE                 | Loopback100       | Loopback        | `10.U.100.1/32`          | Router ID and OSPF advertisement        |
-| CORE                 | Loopback100       | Loopback        | `10.U.100.2/32`          | Router ID and OSPF advertisement        |
-| DIST                 | Loopback100       | Loopback        | `10.U.100.3/32`          | Router ID and OSPF advertisement        |
-| EDGE                 | G0/0/0 to REMOTE  | REMOTE-UPLINK   | `203.0.113.U/24`         | Upstream exit; not in OSPF              |
+| EDGE                 | Loopback100       | Loopback        | `10.45.100.1/32`          | Router ID and OSPF advertisement        |
+| CORE                 | Loopback100       | Loopback        | `10.45.100.2/32`          | Router ID and OSPF advertisement        |
+| DIST                 | Loopback100       | Loopback        | `10.45.100.3/32`          | Router ID and OSPF advertisement        |
+| EDGE                 | G0/0/0 to REMOTE  | REMOTE-UPLINK   | `203.0.113.45/24`         | Upstream exit; not in OSPF              |
 | REMOTE               | Interface to EDGE | REMOTE-UPLINK   | `203.0.113.254/24`       | Upstream next hop                       |
-| EDGE                 | G0/0/1 to CORE    | EDGE–CORE       | `10.U.12.1/29`           | Transit, Area 0                         |
-| CORE                 | G0/0/1 to EDGE    | EDGE–CORE       | `10.U.12.2/29`           | Transit, Area 0                         |
-| EDGE                 | G0/0/2 to DIST    | EDGE–DIST       | `10.U.13.1/29`           | Transit, Area 0                         |
-| DIST                 | G0/0/1 to EDGE    | EDGE–DIST       | `10.U.13.3/29`           | Transit, Area 0                         |
-| CORE                 | G0/0/2 to DIST    | CORE–DIST       | `10.U.23.2/29`           | Transit, Area 0                         |
-| DIST                 | G0/0/2 to CORE    | CORE–DIST       | `10.U.23.3/29`           | Transit, Area 0                         |
-| CORE                 | VLAN20            | CORE VLAN20     | `10.U.20.2/24`           | Default gateway; passive OSPF interface |
-| PC                   | NIC               | CORE VLAN20     | `10.U.20.20/24`          | Evidence host and user endpoint; gateway `10.U.20.2` |
+| EDGE                 | G0/0/1 to CORE    | EDGE–CORE       | `10.45.12.1/29`           | Transit, Area 0                         |
+| CORE                 | G0/0/1 to EDGE    | EDGE–CORE       | `10.45.12.2/29`           | Transit, Area 0                         |
+| EDGE                 | G0/0/2 to DIST    | EDGE–DIST       | `10.45.13.1/29`           | Transit, Area 0                         |
+| DIST                 | G0/0/1 to EDGE    | EDGE–DIST       | `10.45.13.3/29`           | Transit, Area 0                         |
+| CORE                 | G0/0/2 to DIST    | CORE–DIST       | `10.45.23.2/29`           | Transit, Area 0                         |
+| DIST                 | G0/0/2 to CORE    | CORE–DIST       | `10.45.23.3/29`           | Transit, Area 0                         |
+| CORE                 | VLAN20            | CORE VLAN20     | `10.45.20.2/24`           | Default gateway; passive OSPF interface |
+| PC                   | NIC               | CORE VLAN20     | `10.45.20.20/24`          | Evidence host and user endpoint; gateway `10.45.20.2` |
 | TFTP/HTTP/DNS server | Server LAN        | Remote services | `192.0.2.69 / .80 / .53` | Remote services                         |
 
 ---
@@ -88,13 +88,13 @@ The purpose of this lab is not only to make OSPF work. The purpose is to prove, 
 4. Configure CORE VLAN20 and the PC access port.
 5. Shut unused CORE access ports and move them to VLAN666.
 6. Configure SSH on EDGE, CORE, and DIST.
-7. SSH from PC to CORE on the `10.U.20.2` address.
+7. SSH from PC to CORE on the `10.45.20.2` address.
 
 Baseline service requirements:
 
 ```text
 NTP:       Synchronize lab devices to EDGE.  EDGE should be set to master 3.
-Syslog:    Send logging messages to PC `10.U.20.20`.
+Syslog:    Send logging messages to PC `10.45.20.20`.
 PC tool:   Run Tftpd64 Syslog service during the lab.
 ```
 
@@ -129,8 +129,8 @@ show vlan brief
 show tcp brief
 
 PC:
-ping 10.U.20.2
-ssh -l admin 10.U.20.2
+ping 10.45.20.2
+ssh -l admin 10.45.20.2
 ```
 
 #### Success Indicator / Failure Signal
@@ -140,8 +140,8 @@ ssh -l admin 10.U.20.2
 | `show ip interface brief`    | Required physical interfaces and Loopback100 are `up/up` | Interface administratively down, protocol down, or wrong IP |
 | `show vlan brief`            | VLAN20 and VLAN666 exist; PC port is in VLAN20           | Host port in VLAN1 or required VLAN is missing              |
 | `show ip ssh`                | SSH version 2 enabled                                    | SSH disabled or version 1                                   |
-| `PC> ping 10.U.20.2`         | PC reaches CORE VLAN20 gateway                           | Timeout or unreachable                                      |
-| `PC> ssh -l admin 10.U.20.2` | PC opens SSH access to CORE                              | Connection refused or timeout                               |
+| `PC> ping 10.45.20.2`         | PC reaches CORE VLAN20 gateway                           | Timeout or unreachable                                      |
+| `PC> ssh -l admin 10.45.20.2` | PC opens SSH access to CORE                              | Connection refused or timeout                               |
 
 #### C00 — Collection of Information
 
@@ -165,7 +165,7 @@ show vlan brief
 show tcp brief
 
 PC:
-ping 10.U.20.2
+ping 10.45.20.2
 ```
 
 Add this comment line:
@@ -201,7 +201,7 @@ EDGE:
 ```plaintext
 !- Enable OSPF and set the router's identity
 router ospf U
-router-id 10.U.100.1
+router-id 10.45.100.1
 
 !- Enable the loopback100 in OSPF
 interface loopback100
@@ -212,8 +212,8 @@ Configure CORE and DIST with the same required design values from Section B2:
 
 | Device | OSPF process | Router ID | Loopback100 OSPF area |
 |---|---:|---|---:|
-| CORE | `U` | `10.U.100.2` | `0` |
-| DIST | `U` | `10.U.100.3` | `0` |
+| CORE | `U` | `10.45.100.2` | `0` |
+| DIST | `U` | `10.45.100.3` | `0` |
 
 #### Verification
 
@@ -228,7 +228,7 @@ show ip ospf interface loopback100
 
 | Evidence | Success Indicator | Failure Signal |
 |---|---|---|
-| `show ip ospf` | Process `U`; Router ID equals `10.U.100.1`, `.2`, `.3` | Wrong process ID, wrong Router ID, or missing OSPF process |
+| `show ip ospf` | Process `U`; Router ID equals `10.45.100.1`, `.2`, `.3` | Wrong process ID, wrong Router ID, or missing OSPF process |
 | `show ip ospf interface loopback100` | `Process ID U`, `Area 0` | Loopback not listed, wrong area, or wrong process |
 
 #### Checkpoint
@@ -418,7 +418,7 @@ Add this comment line:
 
 #### Goal
 
-Advertise the PC LAN `10.U.20.0/24` into OSPF while preventing OSPF neighbour formation on the user-facing VLAN.
+Advertise the PC LAN `10.45.20.0/24` into OSPF while preventing OSPF neighbour formation on the user-facing VLAN.
 
 #### Why this matters
 
@@ -426,7 +426,7 @@ End-user networks should be reachable through OSPF, but end hosts do not run OSP
 
 #### Expected behaviour
 
-CORE VLAN20 appears in OSPF Area 0 and is passive. EDGE and DIST learn `10.U.20.0/24` through OSPF.
+CORE VLAN20 appears in OSPF Area 0 and is passive. EDGE and DIST learn `10.45.20.0/24` through OSPF.
 
 #### Action
 
@@ -465,13 +465,13 @@ show ip route ospf | begin Gateway
 |---|---|---|
 | `show ip ospf interface vlan 20` | `Process ID U`, `Area 0`, and `Passive` | VLAN20 not OSPF-enabled or not passive |
 | `show ip ospf interface brief` | VLAN20 listed on CORE; no neighbour forms on VLAN20 | VLAN20 missing or neighbour-capable |
-| EDGE/DIST route evidence | Route to `10.U.20.0/24` learned through OSPF | User LAN missing from OSPF route table |
+| EDGE/DIST route evidence | Route to `10.45.20.0/24` learned through OSPF | User LAN missing from OSPF route table |
 
 #### Checkpoint
 
 | Do | Verify | Expect |
 |---|---|---|
-| Add CORE VLAN20 to OSPF and make it passive | `show ip ospf interface vlan 20`; `show ip route ospf` | VLAN20 is passive; EDGE/DIST learn `10.U.20.0/24` |
+| Add CORE VLAN20 to OSPF and make it passive | `show ip ospf interface vlan 20`; `show ip route ospf` | VLAN20 is passive; EDGE/DIST learn `10.45.20.0/24` |
 
 #### C04 — Collection of Information
 
