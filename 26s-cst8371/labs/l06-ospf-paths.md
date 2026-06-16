@@ -29,7 +29,7 @@ The purpose is to understand how OSPF makes forwarding decisions and how network
 
 | Task                       | Command / Indicator            |
 | -------------------------- | ------------------------------ |
-| Verify SSH access          | `ssh admin@10.U.20.2`          |
+| Verify SSH access          | `ssh admin@10.45.20.2`          |
 | Verify OSPF neighbours     | `show ip ospf neighbor`        |
 | Verify OSPF interfaces     | `show ip ospf interface brief` |
 | Verify OSPF routes         | `show ip route ospf`           |
@@ -74,8 +74,8 @@ Reuse the Lab 05 addressing plan.
 
 | Device | Interface | Address |
 |----------|----------|----------|
-| Alpine | eth0 | 10.U.20.10/24 |
-| PC | NIC | 10.U.20.20/24 |
+| Alpine | eth0 | 10.45.20.10/24 |
+| PC | NIC | 10.45.20.20/24 |
 
 ### B3 — Network Roles
 
@@ -225,7 +225,7 @@ When **VMnet0** is bridged to the Intel adapter, Alpine appears on the lab netwo
   
 1. Select the **Alpine VM**.
 2. Configure `Network Adapter → VMnet0`
-3. Configure your MAC address `Advanced → MAC Address → 02:00:00:00:{U}:{U}`
+3. Configure your MAC address `Advanced → MAC Address → 02:00:00:00:45:45`
 
 > If your `U` only has one digit, use `0U`
   
@@ -244,8 +244,8 @@ sudo hostname {username}-alpine
 **Step 6 — Configure Alpine IPv4 addressing**  
   
 ```bash
-sudo ip addr add 10.{U}.20.10/24 dev eth0  
-sudo ip route add default via 10.{U}.20.2  
+sudo ip addr add 10.45.20.10/24 dev eth0  
+sudo ip route add default via 10.45.20.2  
 ```
   
 Verify:  
@@ -262,8 +262,8 @@ ip route
 Verify the default gateway, the PC and the TFTP server:  
 
 ```  
-ping -c 2 10.{U}.20.2  
-ping -c 2 10.{U}.20.20  
+ping -c 2 10.45.20.2  
+ping -c 2 10.45.20.20  
 ping -c 2 192.0.2.69  
 ```
   
@@ -276,9 +276,9 @@ ping -c 2 192.0.2.69
   
 - Alpine hostname is {username}-alpine 
 - Alpine has the correct MAC address
--  Alpine eth0 has 10.{U}.20.10/24  
-- Alpine default route points to 10.{U}.20.2  
-- Alpine can ping 10.{U}.20.2,  10.{U}.20.20  and 192.0.2.69  
+-  Alpine eth0 has 10.45.20.10/24  
+- Alpine default route points to 10.45.20.2  
+- Alpine can ping 10.45.20.2,  10.45.20.20  and 192.0.2.69  
 - PC can SSH to Alpine  
   
 #### Success Indicator / Failure Signal  
@@ -288,12 +288,12 @@ ping -c 2 192.0.2.69
 | Correct VM           | Student is using Alpine                     | Student is using alpine-24F                  |
 | VMnet0 bridge        | VMnet0 is bridged to Intel Adapter (BLUE)   | VMnet0 bridged to wrong adapter              |
 | Alpine adapter       | Alpine network adapter uses Custom → VMnet0 | Alpine uses NAT, Host-only, or another VMnet |
-| Alpine MAC           | 02:00:00:00:{U}:{U}                         | MAC not based on your U number               |
+| Alpine MAC           | 02:00:00:00:45:45                         | MAC not based on your U number               |
 | Hostname             | hostname shows {username}-alpine            | Hostname remains default or incorrect        |
-| IPv4 address         | eth0 has 10.{U}.20.10/24                    | IP address missing or incorrect              |
-| Default route        | Default route points to 10.{U}.20.2         | Default route missing or wrong gateway       |
-| Gateway reachability | Alpine can ping 10.{U}.20.2                 | Ping to gateway fails                        |
-| PC reachability      | Alpine can ping 10.{U}.20.20                | Ping to PC fails                             |
+| IPv4 address         | eth0 has 10.45.20.10/24                    | IP address missing or incorrect              |
+| Default route        | Default route points to 10.45.20.2         | Default route missing or wrong gateway       |
+| Gateway reachability | Alpine can ping 10.45.20.2                 | Ping to gateway fails                        |
+| PC reachability      | Alpine can ping 10.45.20.20                | Ping to PC fails                             |
 | TFTP reachability    | Alpine can ping 192.0.2.69                  | Ping to TFTP server fails                    |
 | SSH to Alpine        | PC opens SSH session to Alpine              | SSH connection fails                         |
   
@@ -356,7 +356,7 @@ Modify the required variables:
 | Variable | Required Value |
 |---|---|
 | `{USERNAME}` | Your username |
-| `{U}` | Your pod number |
+| `45` | Your pod number |
 
 Save and exit.
 
@@ -369,7 +369,7 @@ Display the file:
 Confirm that:
 
 - your {username} appears in the output filename
-- your {U} number appears in the device IP addresses
+- your 45 number appears in the device IP addresses
 - the device list includes the required routers
 
 **Step 4 — Run the automation script**
@@ -409,7 +409,7 @@ If the TFTP command fails, verify:
 
 - `l06-baseline.yaml` exists on Alpine
 - `{USERNAME}` was replaced with your username
-- `{U}` was replaced with your pod number
+- `45` was replaced with your pod number
 - `x_remote.py` runs without connection errors
 - `l06-baseline-{username}.txt` is created
 - the evidence file contains output from the required devices
@@ -421,7 +421,7 @@ If the TFTP command fails, verify:
 | Verification Item | Success Indicator | Failure Signal |
 |---|---|---|
 | YAML file copied | `l06-baseline.yaml` exists on Alpine | YAML file missing |
-| YAML variables | Username and pod number are updated | `{USERNAME}` or `{U}` still appears in file |
+| YAML variables | Username and pod number are updated | `{USERNAME}` or `45` still appears in file |
 | Device connectivity | `x_remote.py` connects to required devices | SSH timeout, authentication failure, or unreachable device |
 | Automation run | Script completes and returns to shell prompt | Script stops with Python, YAML, SSH, or timeout error |
 | Evidence file | `l06-baseline-<username>.txt` exists and has non-zero size | File missing or zero bytes |
@@ -473,14 +473,14 @@ By changing the OSPF reference bandwidth and interface cost, you can observe how
 On EDGE, create Loopback1:
 
     interface loopback1
-    ip address 10.{U}.1.1 255.255.255.255
-    ip ospf {U} area 0
+    ip address 10.45.1.1 255.255.255.255
+    ip ospf 45 area 0
 
 **Step 2 — Check the baseline route from CORE**
 
 From CORE, check the current route to EDGE Loopback1:
 
-    show ip route 10.{U}.1.1
+    show ip route 10.45.1.1
 
 Record the current metric.
 
@@ -488,7 +488,7 @@ Record the current metric.
 
 On EDGE, CORE, and DIST:
 
-    router ospf {U}
+    router ospf 45
     auto-cost reference-bandwidth 10000
 
 **Step 4 — Verify the reference bandwidth**
@@ -501,7 +501,7 @@ From EDGE, CORE, and DIST:
 
 From CORE:
 
-    show ip route 10.{U}.1.1
+    show ip route 10.45.1.1
 
 Compare the new metric with the baseline metric.
 
@@ -509,7 +509,7 @@ Compare the new metric with the baseline metric.
 
 From DIST:
 
-    show ip route 10.{U}.1.1
+    show ip route 10.45.1.1
 
 This shows the cost of the path through DIST toward EDGE.
 
@@ -529,8 +529,8 @@ Choose `N` so the two total path costs are equal:
 
 From CORE:
 
-    show ip cef 10.{U}.1.1
-    show ip route 10.{U}.1.1
+    show ip cef 10.45.1.1
+    show ip route 10.45.1.1
 
 CORE should show two next hops when the path costs are equal.
 
@@ -555,7 +555,7 @@ Update:
 | Variable | Required Value |
 |---|---|
 | `{USERNAME}` | Your username |
-| `{U}` | Your pod number |
+| `45` | Your pod number |
 
 Verify the file before running automation:
 
@@ -589,8 +589,8 @@ Verify:
 
 - EDGE Loopback1 exists and is advertised into OSPF.
 - Reference bandwidth is set to `10000` on EDGE, CORE, and DIST.
-- CORE route metric to `10.{U}.1.1/32` changes after the reference-bandwidth update.
-- CORE shows two next hops to `10.{U}.1.1/32` after interface cost tuning.
+- CORE route metric to `10.45.1.1/32` changes after the reference-bandwidth update.
+- CORE shows two next hops to `10.45.1.1/32` after interface cost tuning.
 - `x_remote.py` creates the evidence file.
 - The evidence file uploads successfully to the TFTP server.
 
@@ -598,20 +598,20 @@ Verify:
 
 | Verification Item | Success Indicator | Failure Signal |
 |---|---|---|
-| EDGE Loopback1 | `10.{U}.1.1/32` exists and is in OSPF | Loopback missing or not advertised |
-| Baseline route | CORE has a route to `10.{U}.1.1/32` | CORE has no route to Loopback1 |
+| EDGE Loopback1 | `10.45.1.1/32` exists and is in OSPF | Loopback missing or not advertised |
+| Baseline route | CORE has a route to `10.45.1.1/32` | CORE has no route to Loopback1 |
 | Reference bandwidth | EDGE, CORE, and DIST show reference bandwidth `10000` | One or more routers still use default reference bandwidth |
 | Route metric change | CORE route metric changes after reference bandwidth update | Metric does not change |
-| Alternate path | DIST has a route to `10.{U}.1.1/32` | DIST route missing |
+| Alternate path | DIST has a route to `10.45.1.1/32` | DIST route missing |
 | Interface cost tuning | CORE path costs become equal | Costs remain unequal |
-| ECMP | CORE shows two next hops to `10.{U}.1.1/32` | CORE shows only one next hop |
+| ECMP | CORE shows two next hops to `10.45.1.1/32` | CORE shows only one next hop |
 | YAML file | `l06-cost.yaml` exists on Alpine | YAML file missing |
 | Automation output | `l06-cost-<username>.txt` exists and has non-zero size | Output file missing or empty |
 | TFTP upload | Upload completes without error | TFTP timeout, unreachable server, or file not found |
 
 #### Troubleshooting
 
-If CORE does not have a route to `10.{U}.1.1/32`, verify that EDGE Loopback1 is enabled in OSPF.
+If CORE does not have a route to `10.45.1.1/32`, verify that EDGE Loopback1 is enabled in OSPF.
 
 If reference bandwidth does not match on all routers, check the OSPF process number.
 
