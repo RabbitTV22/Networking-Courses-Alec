@@ -73,9 +73,9 @@ You are encouraged to use `x_remote.py` to automate collection if you prefer —
 
 | Network | Subnet |
 |---|---|
-| **CORE–EDGE transit** | `198.18.U.0/30` |
-| **VM subnet** | `198.18.U.32/28` |
-| **PC subnet & Mgmt VLAN** | `198.18.U.128/26` |
+| **CORE–EDGE transit** | `198.18.45.0/30` |
+| **VM subnet** | `198.18.45.32/28` |
+| **PC subnet & Mgmt VLAN** | `198.18.45.128/26` |
 
 - **EDGE** always takes the **first usable** address in each lab subnet.
 - **CORE** (when connected) takes the **last usable** address.
@@ -88,10 +88,10 @@ You are encouraged to use `x_remote.py` to automate collection if you prefer —
 | Item | Requirement |
 |---|---|
 | Base configuration | [basic.cfg](../resources/basic.cfg) |
-| OSPF process ID | `U` |
-| Router-IDs | EDGE = `U.0.0.0`, CORE = `0.0.0.U` |
+| OSPF process ID | `45` |
+| Router-IDs | EDGE = `45.0.0.0`, CORE = `0.0.0.45` |
 | Default route | Originated/redistributed on EDGE, advertised via OSPF |
-| CORE–EDGE DR election | CORE wins (interface priority `U` on the transit link) |
+| CORE–EDGE DR election | CORE wins (interface priority `45` on the transit link) |
 | Passive interfaces | All interfaces that do not form OSPF adjacencies |
 | ALS management | VLAN 1 SVI addressed, default gateway configured |
 
@@ -126,8 +126,8 @@ show ip route
 ```
 
 ```bash
-ping 198.18.U.129
-ping 198.18.U.46
+ping 198.18.45.129
+ping 198.18.45.46
 ping 203.0.113.254
 ```
 
@@ -163,7 +163,7 @@ Standard ACLs match only on source address. Placement determines whether the pol
 
 #### Security Policy Statement
 
-Only hosts in the PC subnet (`198.18.U.128/26`) may initiate traffic to the VM network (`198.18.U.32/28`). All other sources are denied.
+Only hosts in the PC subnet (`198.18.45.128/26`) may initiate traffic to the VM network (`198.18.45.32/28`). All other sources are denied.
 
 #### Policy Decomposition
 
@@ -173,7 +173,7 @@ Break the policy into its key elements:
 | ------------------ | -------------------------------------------------------- |
 | **Policy Name**    | `PROTECT-VM`                                             |
 | **ACL Type**       | Standard (source IP only)                                |
-| **Match Criteria** | Source IP in PC subnet: `198.18.U.128/26`                |
+| **Match Criteria** | Source IP in PC subnet: `198.18.45.128/26`                |
 | **Actions**        | 1. **Permit** matching traffic<br>2. **Deny** all others |
 
 #### ACL Placement
@@ -183,8 +183,8 @@ Break the policy into its key elements:
 To decide exactly where and how to apply our **PROTECT-VM** standard ACL, follow these three steps:
 
 1. **Trace the Traffic Path**  
-   - **Source:** any PC in 198.18.U.128/26 → moves up to the CORE router (Gi0/0/1) → across the transit link (CORE Gi0/0/0 → EDGE Gi0/0/1) → exits EDGE toward the VM network (Gi0/0/2).  
-   - **Destination:** any VM in 198.18.U.32/28.
+   - **Source:** any PC in 198.18.45.128/26 → moves up to the CORE router (Gi0/0/1) → across the transit link (CORE Gi0/0/0 → EDGE Gi0/0/1) → exits EDGE toward the VM network (Gi0/0/2).  
+   - **Destination:** any VM in 198.18.45.32/28.
 
 2. **Choose the Closest Device to the Destination**  
    - Since this is a **standard ACL** (which matches only on source IP), best practice is to place it as **close to the destination** as possible.  
@@ -205,7 +205,7 @@ To decide exactly where and how to apply our **PROTECT-VM** standard ACL, follow
 ```shell
 !-- Create and populate the ACL
  ip access-list standard PROTECT-VM
-   permit 198.18.U.128 0.0.0.63 log
+   permit 198.18.45.128 0.0.0.63 log
    deny any
  exit
 
@@ -223,9 +223,9 @@ interface GigabitEthernet0/0/2
 
 ```bash
 EDGE# clear access-list counters PROTECT-VM
-PC# ping 198.18.U.46
-CORE# ping 198.18.U.46
-CORE# ping 198.18.U.46 source 198.18.U.190
+PC# ping 198.18.45.46
+CORE# ping 198.18.45.46
+CORE# ping 198.18.45.46 source 198.18.45.190
 EDGE# show ip access-lists PROTECT-VM
 EDGE# show ip interface GigabitEthernet0/0/2 | include PROTECT-VM
 EDGE# show logging | include PROTECT-VM
@@ -272,8 +272,8 @@ In your `l10-{username}.txt` file, create a section labelled:
 
 **CORE**:
 ```bash 
-# ping 198.18.U.46                          !-- FAIL
-# ping 198.18.U.46 source 198.18.U.190      !-- PASS
+# ping 198.18.45.46                          !-- FAIL
+# ping 198.18.45.46 source 198.18.45.190      !-- PASS
 ```
 
 **EDGE**:
@@ -304,7 +304,7 @@ show logging | include PROTECT-VM
 
 ayalac-EDGE# show ip access-lists PROTECT-VM 
 Standard IP access list PROTECT-VM     
-10 permit 198.18.U.128, wildcard bits 0.0.0.63  (4 matches)     
+10 permit 198.18.45.128, wildcard bits 0.0.0.63  (4 matches)     
 20 deny   any                                   (4 matches)  
 
 ayalac-EDGE# show ip interface GigabitEthernet0/0/2  | include PROTECT-VM
@@ -333,7 +333,7 @@ IP spoofing lets an attacker bypass ACLs that trust "inside" addresses. Blocking
 
 #### Security Policy Statement
 
-Any packet whose **source** IP claims to be within the PC subnet (`198.18.U.128/26`), but does **not** arrive from the trusted PC segment, must be dropped and logged. All other traffic — including legitimate external or remote sources — is permitted to reach the PC network.
+Any packet whose **source** IP claims to be within the PC subnet (`198.18.45.128/26`), but does **not** arrive from the trusted PC segment, must be dropped and logged. All other traffic — including legitimate external or remote sources — is permitted to reach the PC network.
 
 > This ACL is **not** concerned with destination address. It examines only source address, to stop packets arriving from EDGE that pretend to originate inside the PC subnet.
 
@@ -361,7 +361,7 @@ Fill in the blanks based on the security policy statement above.
 | CORE | | | |
 
 **Reasoning checkpoints (answer before configuring):**
-1. Trace the path of a packet from the Internet/EDGE to a PC in `198.18.U.128/26` — which router/interface does it arrive on before reaching the PC network?
+1. Trace the path of a packet from the Internet/EDGE to a PC in `198.18.45.128/26` — which router/interface does it arrive on before reaching the PC network?
 2. Why must the ACL be applied **before** packets reach the PCs, but **after** normal routing?
 3. Which interface and direction ensures only packets destined for the PC network are checked?
 
@@ -375,7 +375,7 @@ Before testing, create a spoof source on EDGE:
 
 ```shell
 EDGE(config)# interface Loopback130
-EDGE(config-if)# ip address 198.18.U.130 255.255.255.255
+EDGE(config-if)# ip address 198.18.45.130 255.255.255.255
 EDGE(config-if)# exit
 ```
 
@@ -383,10 +383,10 @@ EDGE(config-if)# exit
 # Clear ACL counter
 clear access-list counters PROTECT-PC
 
-PC# ping 198.18.U.190                                 !-- Successful
+PC# ping 198.18.45.190                                 !-- Successful
 
-EDGE# ping 198.18.U.129 source 198.18.U.130           !-- Fail; should be dropped
-EDGE# ping 198.18.U.129 source 203.0.113.U            !-- Successful
+EDGE# ping 198.18.45.129 source 198.18.45.130           !-- Fail; should be dropped
+EDGE# ping 198.18.45.129 source 203.0.113.45            !-- Successful
 EDGE# show access-lists PROTECT-PC
 
 EDGE# show logging | include PROTECT-PC
@@ -420,9 +420,9 @@ In your `l10-{username}.txt` file, create a section labelled:
 
 Copy the command and output of your pings:
 ```bash
-PC# ping 198.18.U.190                           !-- PASS
-EDGE# ping 198.18.U.129 source 198.18.U.130     !-- FAIL
-EDGE# ping 198.18.U.129 source 203.0.113.U      !-- PASS    
+PC# ping 198.18.45.190                           !-- PASS
+EDGE# ping 198.18.45.129 source 198.18.45.130     !-- FAIL
+EDGE# ping 198.18.45.129 source 203.0.113.45      !-- PASS    
 ```
 
 Copy the output of these commands from the device you applied the AC::
@@ -458,7 +458,7 @@ Management-plane access is one of the highest-value targets on any network devic
 
 #### Security Policy Statement
 
-Only hosts in the PC subnet (`198.18.U.128/26`) and the TFTP server may establish SSH sessions to the switch management interface. All other attempts are denied and logged.
+Only hosts in the PC subnet (`198.18.45.128/26`) and the TFTP server may establish SSH sessions to the switch management interface. All other attempts are denied and logged.
 
 > Enforce this with a standard ACL applied as `access-class` on the switch's VTY lines (0–4), bound inbound.
 
@@ -498,9 +498,9 @@ ALS# clear access-list counters PROTECT-ALS
 
 | Test | Command | Expected Result |
 |---|---|---|
-| SSH from PC (allowed) | `PC# ssh admin@198.18.U.189` | Successful login prompt |
-| SSH from TFTP server (allowed) | `TFTP# ssh admin@198.18.U.189` | Successful login prompt |
-| SSH from VM host (denied) | `VM# ssh admin@198.18.U.189` | Connection refused or timeout |
+| SSH from PC (allowed) | `PC# ssh admin@198.18.45.189` | Successful login prompt |
+| SSH from TFTP server (allowed) | `TFTP# ssh admin@198.18.45.189` | Successful login prompt |
+| SSH from VM host (denied) | `VM# ssh admin@198.18.45.189` | Connection refused or timeout |
 | ACL counter validation | `ALS# show access-lists PROTECT-ALS` | Permit ACEs have hits for PC & TFTP; deny ACE has hits for VM |
 
 #### Success Indicator / Failure Signal
