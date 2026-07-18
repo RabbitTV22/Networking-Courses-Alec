@@ -68,18 +68,18 @@ By mastering PAT, static port-forwarding, and dynamic NAT pools, you'll gain pra
 
 ### B2 — Addressing Table (IPv4)
 
-Use the table below to configure your devices. Replace `U` with your assigned student ID number.
+Use the table below to configure your devices. Replace `45` with your assigned student ID number.
 
 | Device             | Interface | IP Address (CIDR)  | Description                                 |
 | ------------------ | --------- | ------------------ | -------------------------------------------- |
-| **RA**             | Gi0/0/0   | `203.0.113.U/24`   | Outside interface to Internet                |
-| **RA**             | Gi0/0/1   | `198.18.U.17/29`   | Inside interface, OSPF neighbor to RB        |
-| **RB**             | Gi0/0/0   | `10.U.18.1/28`     | Inside gateway for dynamic NAT pool hosts    |
-| **RB**             | Gi0/0/1   | `198.18.U.22/29`   | OSPF neighbour to RA                         |
+| **RA**             | Gi0/0/0   | `203.0.113.45/24`   | Outside interface to Internet                |
+| **RA**             | Gi0/0/1   | `198.18.45.17/29`   | Inside interface, OSPF neighbor to RB        |
+| **RB**             | Gi0/0/0   | `10.45.18.1/28`     | Inside gateway for dynamic NAT pool hosts    |
+| **RB**             | Gi0/0/1   | `198.18.45.22/29`   | OSPF neighbour to RA                         |
 | **RB**             | Gi0/0/2   | `172.16.9.33/28`   | Host receiving static port-forward (Telnet)  |
-| **RB**             | LoU       | `192.168.U.1/24`   | Private network                              |
+| **RB**             | LoU       | `192.168.45.1/24`   | Private network                              |
 | **VM (PAT host)**  | Gi0/0/2   | `172.16.9.46/28`   | Inside host for PAT translation tests        |
-| **PC (Pool host)** | Gi0/0/0   | `10.U.18.14/28`    | Inside host for dynamic NAT pool tests       |
+| **PC (Pool host)** | Gi0/0/0   | `10.45.18.14/28`    | Inside host for dynamic NAT pool tests       |
 | **Remote**         | —         | `203.0.113.254/24` | External tester for Internet connectivity    |
 
 > **VM Network**
@@ -91,13 +91,13 @@ Use the table below to configure your devices. Replace `U` with your assigned st
 | Item                | Requirement                                                                                                                                           |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Base configuration  | [basic.cfg](../resources/basic.cfg)                                                                                                                   |
-| OSPF process ID     | `U`                                                                                                                                                   |
-| Router-IDs          | RA = `U.0.0.17`, RB = `U.0.0.22`                                                                                                                      |
+| OSPF process ID     | `45`                                                                                                                                                   |
+| Router-IDs          | RA = `45.0.0.17`, RB = `45.0.0.22`                                                                                                                      |
 | Default route       | Originated/redistributed so `0.0.0.0/0` is known across the OSPF domain                                                                               |
-| RA–RB DR election   | RB wins (interface priority `U`)                                                                                                                      |
+| RA–RB DR election   | RB wins (interface priority `45`)                                                                                                                      |
 | Passive interfaces  | All interfaces not directly connected to an OSPF neighbour                                                                                            |
 | Reference bandwidth | `10000 Mbps` on all OSPF-speaking routers                                                                                                             |
-| Convergence tuning  | RB–LoU network type `point-to-point`<br>`198.18.U.16/29` link uses `hello 3`/`dead 6`<br> RB's PC- and VM-facing interfaces have priority `0`         |
+| Convergence tuning  | RB–LoU network type `point-to-point`<br>`198.18.45.16/29` link uses `hello 3`/`dead 6`<br> RB's PC- and VM-facing interfaces have priority `0`         |
 | Services            | RA is NTP master (stratum 4); <br>RB syncs to RA; <br>TFTP source-address fix applied to routers; <br>syslog directed to the PC per B3 details in C00 |
 
 ---
@@ -138,17 +138,17 @@ NAT rules depend on a stable, routable network underneath them. If OSPF adjacenc
 - [ ] Console to **RA** and SSH into **RB** using the user `cisco/cisco`.
 
 **3. OSPF Configuration**
-- [ ] **Process ID**: Use `U` as the OSPF process number.
+- [ ] **Process ID**: Use `45` as the OSPF process number.
 - [ ] **Router-IDs**: Manually set each router's ID under OSPF:
-	- [ ] `RA`: `U.0.0.17`
-	- [ ] `RB`: `U.0.0.22`
+	- [ ] `RA`: `45.0.0.17`
+	- [ ] `RB`: `45.0.0.22`
 - [ ] **Default Gateway Advertisement**: On **RA**, redistribute or originate a default route so that `0.0.0.0/0` is known across the OSPF domain.
-- [ ] **RA–RB DR Election**: Ensure **RB** becomes the DR by setting its priority to `U`.
+- [ ] **RA–RB DR Election**: Ensure **RB** becomes the DR by setting its priority to `45`.
 - [ ] Configure explicitly all interfaces **not directly connected to an OSPF neighbour** as passive.
 - [ ] Set the OSPF **reference bandwidth** to `10000 Mbps` for accurate cost calculation on gigabit links.
 - [ ] **Convergence Tuning**:
 	- [ ] **RB–LoU**: Configure as a `point-to-point` OSPF network type.
-	- [ ] On the `198.18.U.16/29` link, set `hello 3` and `dead 6`.
+	- [ ] On the `198.18.45.16/29` link, set `hello 3` and `dead 6`.
 	- [ ] **RB** interfaces towards the PC and the VM network should _never_ become a DR by setting their priority to `0`.
 
 **4. Services**
@@ -163,7 +163,7 @@ NAT rules depend on a stable, routable network underneath them. If OSPF adjacenc
 ```bash
 ! --- SYSLOG Configuration ---
 ! Direct syslog messages to the PC
-R(config)# logging host 10.U.18.14 transport udp port 514
+R(config)# logging host 10.45.18.14 transport udp port 514
 
 ! Use the Gi0/0/0 interface as the syslog source
 R(config)# logging source-interface GigabitEthernet0/0/0
@@ -189,7 +189,7 @@ On your **PC** (using **TFTP64**):
 Your PC and VM only have private addresses at this point, so neither can reach the remote server (`192.0.2.69`) yet — that path doesn't exist until C01's PAT rule is configured. To retrieve the automated-evidence YAML file before then, temporarily borrow public addressing on the VM:
 
 - [ ] Use the **Alpine VM**.
-- [ ] Temporarily connect the VM to the **REMOTE** network: address `203.0.113.U/24`, gateway `203.0.113.254`.
+- [ ] Temporarily connect the VM to the **REMOTE** network: address `203.0.113.45/24`, gateway `203.0.113.254`.
 - [ ] From the VM, retrieve the YAML file:
     ```bash
     scp cisco@192.0.2.69:YAML/l11-ospf.yaml .
@@ -368,7 +368,7 @@ Under this header, perform the following steps and include the outputs as descri
 
 | Step                         | Command(s)                 | What to Include                                                                                        |
 | ---------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------ |
-| **1. Show NAT translations** | `show ip nat translations` | Full translation table, showing ICMP and UDP/69 (TFTP) entries for `172.16.9.46` → `203.0.113.U` to `192.0.2.69` |
+| **1. Show NAT translations** | `show ip nat translations` | Full translation table, showing ICMP and UDP/69 (TFTP) entries for `172.16.9.46` → `203.0.113.45` to `192.0.2.69` |
 | **2. Verify ACL hits**       | `show ip access-lists 16`  | The ACL 16 permit statement; hit count ≥ 2 indicating both flows were matched                          |
 | **3. Show NAT statistics**   | `show ip nat statistics`   | Total active translations ≥ 2; hits/misses summary for inside source translations                    |
 
@@ -378,7 +378,7 @@ Under this header, perform the following steps and include the outputs as descri
 |---|---|
 | Device prompt & command | Include device name and exact command |
 | Full command output | Capture the entire output of each command without truncation |
-| NAT translation entries | In `show ip nat translations`, confirm ICMP and UDP/69 entries mapping `172.16.9.46` → `203.0.113.U` → `192.0.2.69` |
+| NAT translation entries | In `show ip nat translations`, confirm ICMP and UDP/69 entries mapping `172.16.9.46` → `203.0.113.45` → `192.0.2.69` |
 | Comment | e.g., `!-- PAT to exit interface functioning; ICMP and TFTP translations and ACL verified.` |
 
 #### Sample Output Block
@@ -389,8 +389,8 @@ Under this header, perform the following steps and include the outputs as descri
 
 ayalac-RA# show ip nat translations
 Pro  Inside global        Inside local         Outside local       Outside global
-ICMP 203.0.113.U:1       172.16.9.46:1        192.0.2.69:0         192.0.2.69:0
-UDP  203.0.113.U:52345   172.16.9.46:52345    192.0.2.69:69        192.0.2.69:69
+ICMP 203.0.113.45:1       172.16.9.46:1        192.0.2.69:0         192.0.2.69:0
+UDP  203.0.113.45:52345   172.16.9.46:52345    192.0.2.69:69        192.0.2.69:69
 
 ayalac-RA# show ip access-lists 16
 Standard IP access list 16
@@ -431,16 +431,16 @@ Allow Internet users to Telnet to internal RB at `172.16.9.33:23` via RA's publi
     ```
     - [ ] Telnet is a TCP protocol.
     - [ ] Internally, the RB telnet server is at `172.16.9.33` port `23`.
-    - [ ] Outside hosts should connect to `203.0.113.U` port `2323`.
+    - [ ] Outside hosts should connect to `203.0.113.45` port `2323`.
 
 #### Verification
 
 - [ ] From PC, telnet to your partner's router `203.0.113.P` and login. Keep the connection open.
 - [ ] From PC, telnet to your partner's RB `203.0.113.P 2323` and login. Keep the connection open.
-- [ ] From your partner PC, telnet to your router `203.0.113.U` and login. Keep the connection open.
-- [ ] From your partner PC, telnet to your RB `203.0.113.U 2323` and login. Keep the connection open.
+- [ ] From your partner PC, telnet to your router `203.0.113.45` and login. Keep the connection open.
+- [ ] From your partner PC, telnet to your RB `203.0.113.45 2323` and login. Keep the connection open.
 
-> `P`: Your partner's `U`. You are testing your partner's configuration. They are testing your configuration.
+> `P`: Your partner's `45`. You are testing your partner's configuration. They are testing your configuration.
 
 ```bash
 RA:  show ip nat translations
@@ -452,7 +452,7 @@ RB:  show users
 
 | Verification Item | Success Indicator | Failure Signal |
 |---|---|---|
-| NAT translations | Static entry `203.0.113.U:2323` → `172.16.9.33:23` | Entry missing |
+| NAT translations | Static entry `203.0.113.45:2323` → `172.16.9.33:23` | Entry missing |
 | TCP listener check | `LISTEN` or `ESTAB` on local port 2323 on RB | No listener present |
 | Active Telnet sessions | `vty` line with protocol `telnet` from PC/partner to RA and RB | No active sessions |
 
@@ -472,7 +472,7 @@ Copy and paste the outputs (including device prompts) of the following commands 
 
 | Requirement | Details |
 |---|---|
-| NAT translations | `RA: show ip nat translations` — confirm a static entry mapping `203.0.113.U:2323` → `172.16.9.33:23` |
+| NAT translations | `RA: show ip nat translations` — confirm a static entry mapping `203.0.113.45:2323` → `172.16.9.33:23` |
 | TCP listener check | `RB: show tcp brief` — ensure there is a `LISTEN` or `ESTAB` on local port 2323 |
 | Active Telnet sessions | `RB: show users` — confirm at least one `vty` line with protocol `telnet` from your PC or partner's PC to RA and to RB is open |
 
@@ -482,7 +482,7 @@ Copy and paste the outputs (including device prompts) of the following commands 
 |---|---|
 | Device prompt & command | Include device name and exact command |
 | Full command output | Capture the entire output of each command without truncation |
-| NAT translation entry | In `show ip nat translations`, confirm a static entry mapping `203.0.113.U:2323` → `172.16.9.33:23` |
+| NAT translation entry | In `show ip nat translations`, confirm a static entry mapping `203.0.113.45:2323` → `172.16.9.33:23` |
 | TCP listener | In `show tcp brief` ensure there is a `LISTEN` (or `ESTAB`) on local port 2323 |
 | Active Telnet sessions | In `show users`, confirm at least one `vty` line with protocol `telnet` from your PC (or partner's PC) to RA and to RB |
 | Comment | e.g., `!-- Static port-forward for Telnet to 172.16.9.33:23 verified; TCP listener, and sessions confirmed.` |
@@ -495,11 +495,11 @@ Copy and paste the outputs (including device prompts) of the following commands 
 
 ayalac-RA# show ip nat translations
 Pro Inside global          Inside local         Outside local        Outside global
-tcp 203.0.113.U:2323      172.16.9.33:23       10.P.18.14:54321  10.P.18.14:54321
+tcp 203.0.113.45:2323      172.16.9.33:23       10.P.18.14:54321  10.P.18.14:54321
 
 ayalac-RB# show tcp brief
 TCB     Local Address         Foreign Address      (state)
-0xABC   203.0.113.U.2323     10.P.18.14.56789     LISTEN
+0xABC   203.0.113.45.2323     10.P.18.14.56789     LISTEN
 
 ayalac-RB# show users
     Line       User       Host(s)              Idle       Location
@@ -522,19 +522,19 @@ A dynamic PAT pool sits between a single-address overload and full one-to-one st
 
 #### Security / Translation Policy Statement
 
-Enable dynamic PAT for the PC network (`10.U.18.0/28`) using a pool of public addresses on RA.
+Enable dynamic PAT for the PC network (`10.45.18.0/28`) using a pool of public addresses on RA.
 
 #### Action
 
-- [ ] Configure NAT with overload for the network `10.U.18.0/28` to an address from the pool:
+- [ ] Configure NAT with overload for the network `10.45.18.0/28` to an address from the pool:
     - [ ] Identify the NAT inside and outside interfaces.
-    - [ ] Code access-list `18` to permit the inside private addresses `10.U.18.0/28`.
-    - [ ] Set up the NAT pool called `NAT_POOL` using addresses `209.10.U.2 – 209.10.U.6 /29`.
+    - [ ] Code access-list `18` to permit the inside private addresses `10.45.18.0/28`.
+    - [ ] Set up the NAT pool called `NAT_POOL` using addresses `209.10.45.2 – 209.10.45.6 /29`.
     - [ ] Code the translation rule with overload to translate host addresses permitted by access-list 18 to an address from the `NAT_POOL` NAT pool.
 
 #### Verification
 
-Generate two types of traffic from your **PC (10.U.18.14)**:
+Generate two types of traffic from your **PC (10.45.18.14)**:
 
 1. **ICMP test**: Ping to `192.0.2.69`.
 2. **TFTP test**: Upload a file to the TFTP server; it could be your current `l11-nat-{USERNAME}.txt`.
@@ -552,11 +552,11 @@ show access-lists 18
 |---|---|---|
 | ICMP translation | Entry for `192.0.2.53`/`192.0.2.69` present | Entry missing |
 | TFTP (UDP 69) translation | Entry for port 69 present | Entry missing |
-| ACL 18 hit count | `permit 10.U.18.0 0.0.0.15` shows matches ≥ 2 | 0 matches |
+| ACL 18 hit count | `permit 10.45.18.0 0.0.0.15` shows matches ≥ 2 | 0 matches |
 
 #### Troubleshooting
 
-If translations don't appear: confirm the pool range and mask match `209.10.U.2 – 209.10.U.6 /29`, and that ACL 18's wildcard mask matches `10.U.18.0/28`.
+If translations don't appear: confirm the pool range and mask match `209.10.45.2 – 209.10.45.6 /29`, and that ACL 18's wildcard mask matches `10.45.18.0/28`.
 
 #### C03 — Collection of Information
 
@@ -573,10 +573,10 @@ In your `l11-nat-{USERNAME}.txt` file, create a section labelled:
 | Device prompt & command | Include device name and exact command for each, e.g., `ayalac-RA# show ip nat translations` |
 | Full command output | Copy the entire output of each command without truncation |
 | Translation entries | In `show ip nat translations`, confirm an ICMP entry for `192.0.2.53`/`192.0.2.69` and a UDP entry for port `69` (TFTP) |
-| ACL hit count | From `show access-lists 18`: verify `permit 10.U.18.0 0.0.0.15` shows a matches count ≥ 2 |
+| ACL hit count | From `show access-lists 18`: verify `permit 10.45.18.0 0.0.0.15` shows a matches count ≥ 2 |
 | Comment | e.g., `!-- Dynamic PAT pool NAT_POOL functioning; ICMP and TFTP translations verified.` |
 
-> This confirms that inside hosts in `10.U.18.0/28` are translating via addresses in pool `NAT_POOL`, for both standard ICMP and UDP/TFTP traffic.
+> This confirms that inside hosts in `10.45.18.0/28` are translating via addresses in pool `NAT_POOL`, for both standard ICMP and UDP/TFTP traffic.
 
 **Submit Verification File**
 - [ ] Submit `l11-nat-{USERNAME}.txt` to the TFTP server.
