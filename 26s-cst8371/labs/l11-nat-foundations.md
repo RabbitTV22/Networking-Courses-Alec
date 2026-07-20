@@ -77,7 +77,7 @@ Use the table below to configure your devices. Replace `45` with your assigned s
 | **RB**             | Gi0/0/0   | `10.45.18.1/28`     | Inside gateway for dynamic NAT pool hosts    |
 | **RB**             | Gi0/0/1   | `198.18.45.22/29`   | OSPF neighbour to RA                         |
 | **RB**             | Gi0/0/2   | `172.16.9.33/28`   | Host receiving static port-forward (Telnet)  |
-| **RB**             | LoU       | `192.168.45.1/24`   | Private network                              |
+| **RB**             | Lo45      | `192.168.45.1/24`   | Private network                              |
 | **VM (PAT host)**  | Gi0/0/2   | `172.16.9.46/28`   | Inside host for PAT translation tests        |
 | **PC (Pool host)** | Gi0/0/0   | `10.45.18.14/28`    | Inside host for dynamic NAT pool tests       |
 | **Remote**         | —         | `203.0.113.254/24` | External tester for Internet connectivity    |
