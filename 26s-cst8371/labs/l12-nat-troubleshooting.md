@@ -33,7 +33,9 @@ Your job is not to configure NAT. Your job is to **prove what is broken, why it 
 
 ### A1.2 — Evidence Collection
 
-This lab uses the same **manual evidence collection** convention as previous labs: copy device prompts and full command output into your submission file **as you complete each checkpoint** — not saved up and written from memory at the end.
+**C00** is collected automatically with `x_remote.py` against `l12-base.yaml` (see C00 below) — this captures the baseline addressing, SSH, routing, and DHCP binding state in one pass.
+
+**C01–C04** use the same **manual evidence collection** convention as previous labs: copy device prompts and full command output into your submission file **as you complete each checkpoint** — not saved up and written from memory at the end. These checkpoints require before/after evidence around each fix, which a single static command run can't capture.
 
 ### A2 — Why This Lab Is Important
 
@@ -112,12 +114,12 @@ For orientation, the topology has:
 
 ### B3 — Provisioning Requirements
 
-| Item              | Requirement                                                                               |
-| ----------------- | ----------------------------------------------------------------------------------------- |
-| Provisioning tool | `day0_provision.py`,<br> config `day0-lab12.yaml`<br> `resources/day0-provision-guide.md` |
-| Fault set         | Set 1 (`lab12-core-set1.txt` / `lab12-edge-set1.txt`)                                     |
-| Push origin       | Your **native host OS** (Windows/Mac/Linux), **not** a VM                                 |
-| Post-push access  | SSH from Alpine, once CORE/EDGE have IPs                                                  |
+| Item              | Requirement                                               |
+| ----------------- | --------------------------------------------------------- |
+| Provisioning tool | `day0_provision.py`,<br>[`day0-provision-guide.md`](../resources/day0-provision-guide.md) |
+| Fault set         | Set 1 (`lab12-core.txt` / `lab12-edge.txt`)               |
+| Push origin       | Your **native host OS** (Windows/Mac/Linux), **not** a VM |
+| Post-push access  | SSH from Alpine, once CORE/EDGE have IPs                  |
 
 ### B4 — Intended NAT Design
 
@@ -210,48 +212,19 @@ If an end device has no DHCP binding: confirm it's cabled to the right port and 
 
 #### C00 — Collection of Information
 
-In `l12-{username}.txt`, create:
+C00 is collected automatically — you are not hand-copying prompts for this checkpoint.
 
-```text
-=== C00 – Baseline for Lab 12, and SSH state ===
-```
-
-From CORE and EDGE:
-
-```text
-show ip interface brief | ex una|down
-show ip route | begin Gateway
-show ip ssh
-show tcp brief
-```
-
-Add this comment line:
-
-```text
-!-- Proves base addressing, SSH and routing.
-```
+1. On your Alpine VM, get `l12-base.yaml` from the lab's `yaml/` folder (same place you got it for previous labs).
+2. Open it and replace `{U}` and `{USERNAME}` with your own U number and username. It already targets CORE (`198.18.{U}.22`) and EDGE (`203.0.113.{U}`) with the `admin`/`cisco` credentials from C00 step 6, and it collects the interface, route, SSH, TCP, and DHCP binding evidence in one pass.
+3. Run it:
+   ```bash
+   python x_remote.py l12-base.yaml
+   ```
+4. Confirm the run produced `l12-base-{username}.txt` with output for both CORE and EDGE, and that the DHCP binding output shows a leased address for the PC pool host and the server/VM host — you'll need both addresses for the trouble tickets below.
 
 #### Sample Output Block
 
 ```bash
-=== C00 – Baseline for Lab 12, and SSH state ===
-!-- Proves base addressing, SSH and routing.
-
-{username}-EDGE# show ip interface brief | ex una|down
-Interface              IP-Address      OK? Method Status                Protocol
-GigabitEthernet0/0/0    203.0.113.17    YES manual up                    up
-GigabitEthernet0/0/1    198.18.17.17    YES manual up                    up
-
-{username}-EDGE# show ip route | begin Gateway
-Gateway of last resort is 203.0.113.254 to network 0.0.0.0
-...
-
-{username}-EDGE# show ip ssh
-SSH Enabled - version 2.0
-
-{username}-EDGE# show tcp brief
-TCB     Local Address           Foreign Address        (state)
-
 {username}-CORE# show ip interface brief | ex una|down
 Interface              IP-Address      OK? Method Status                Protocol
 GigabitEthernet0/0/0    10.17.18.1      YES manual up                    up
@@ -268,9 +241,27 @@ SSH Enabled - version 2.0
 
 {username}-CORE# show tcp brief
 TCB     Local Address           Foreign Address        (state)
-```
 
-Also record `show ip dhcp binding` on CORE — you'll need the PC pool host's and server/VM host's leased addresses for the trouble tickets below.
+{username}-CORE# show ip dhcp binding
+IP address       Client-ID/Hardware address   Lease expiration   Type
+10.17.18.5       aabb.cc00.1001               ...                Automatic
+172.16.9.6       aabb.cc00.2001                ...                Automatic
+
+{username}-EDGE# show ip interface brief | ex una|down
+Interface              IP-Address      OK? Method Status                Protocol
+GigabitEthernet0/0/0    203.0.113.17    YES manual up                    up
+GigabitEthernet0/0/1    198.18.17.17    YES manual up                    up
+
+{username}-EDGE# show ip route | begin Gateway
+Gateway of last resort is 203.0.113.254 to network 0.0.0.0
+...
+
+{username}-EDGE# show ip ssh
+SSH Enabled - version 2.0
+
+{username}-EDGE# show tcp brief
+TCB     Local Address           Foreign Address        (state)
+```
 
 ---
 
@@ -286,7 +277,7 @@ Each ticket below is a short complaint, the way it would actually arrive from a 
 
 #### Ticket
 
-*"No inside host — on any subnet — can reach anything outside the pod. Even test traffic sourced directly from the router doesn't translate."*
+*"Verify nat router interface roles."*
 
 #### Why This Matters
 
@@ -294,15 +285,15 @@ NAT depends entirely on IOS knowing which interface is "inside" and which is "ou
 
 #### Testing This Ticket
 
-Generate any translation attempt — a simple ping sourced from any inside-facing interface on CORE is enough:
+Review the interface roles in your nat router.
 
-```text
-{username}-CORE# ping 192.0.2.69 source GigabitEthernet0/0/0
+```
+show ip nat statistics
 ```
 
 #### Audit
 
-Apply A3 step 1 to EDGE, using the evidence commands in A1.1 and your **NAT troubleshooting infographic** (posted in Brightspace). Compare what IOS reports against the physical roles you discovered in C00 and the intention in B4.
+Compare what IOS reports against the physical roles you discovered in C00 and the intention in B4.
 
 #### Success Indicator / Failure Signal
 
@@ -525,13 +516,14 @@ Add a comment line stating what was wrong and what you changed, e.g.:
 
 ### D1 — Submission Requirements
 
-Submit a single file:
+Submit two files:
 
 ```text
+l12-base-{username}.txt
 l12-{username}.txt
 ```
 
-containing all five sections: `C00`, `C01`, `C02`, `C03`, `C04` — each appended to the file as you complete that checkpoint, not written from memory at the end.
+`l12-base-{username}.txt` is the `x_remote.py` output from C00. `l12-{username}.txt` contains the remaining four sections — `C01`, `C02`, `C03`, `C04` — each appended to the file as you complete that checkpoint, not written from memory at the end.
 
 ### D2 — Submit from PC
 
@@ -541,8 +533,8 @@ ls -l /var/tftp/*{username}*
 ```
 
 1. TFTP transfer completed.
-2. File name is `l12-{username}.txt`.
-3. File has non-zero size.
+2. Both `l12-base-{username}.txt` and `l12-{username}.txt` are present.
+3. Both files have non-zero size.
 
 Upload your corrected device configs to the TFTP server alongside your evidence file.
 
