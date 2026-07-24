@@ -1,0 +1,38 @@
+# 26S-CST8371 - Lab 12 - C00 Baseline (addressing, SSH, routing, DHCP bindings)
+# Collect verification commands after provisioning CORE and EDGE (day0_provision.py)
+# Used with x_remote.py
+# https://github.com/ayalac1111/x-remote
+#
+# Replace {USERNAME} with your username
+# Replace {U} with your U number
+
+output_file: l12-base-{USERNAME}.txt
+
+devices:
+  - device_info:
+      device_type: cisco_xe
+      ip: 198.18.{U}.22        # CORE
+      username: admin
+      password: cisco
+    commands:
+      # --- Baseline addressing and routing
+      - show ip interface brief | ex una|down
+      - show ip route | begin Gateway
+      # --- Services
+      - show ip ssh
+      - show tcp brief
+      # --- DHCP bindings for PC pool host and server/VM host
+      - show ip dhcp binding
+
+  - device_info:
+      device_type: cisco_xe
+      ip: 203.0.113.{U}        # EDGE
+      username: admin
+      password: cisco
+    commands:
+      # --- Baseline addressing and routing
+      - show ip interface brief | ex una|down
+      - show ip route | begin Gateway
+      # --- Services
+      - show ip ssh
+      - show tcp brief
