@@ -153,3 +153,6 @@ data/~$grading_scheme_template.xlsx
 *.pkt.autosave
 *.bak
 *.tmp
+
+# local convenience symlink to the active semester (not for students)
+/current
