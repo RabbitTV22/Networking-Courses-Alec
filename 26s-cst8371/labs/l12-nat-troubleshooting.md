@@ -114,12 +114,12 @@ For orientation, the topology has:
 
 ### B3 — Provisioning Requirements
 
-| Item              | Requirement                                               |
-| ----------------- | --------------------------------------------------------- |
+| Item              | Requirement                                                                               |
+| ----------------- | ----------------------------------------------------------------------------------------- |
 | Provisioning tool | `day0_provision.py`,<br>[`day0-provision-guide.md`](../resources/day0-provision-guide.md) |
-| Fault set         | Set 1 (`lab12-core.txt` / `lab12-edge.txt`)               |
-| Push origin       | Your **native host OS** (Windows/Mac/Linux), **not** a VM |
-| Post-push access  | SSH from Alpine, once CORE/EDGE have IPs                  |
+| Fault set         | Set 1 (`lab12-core.txt` / `lab12-edge.txt`)                                               |
+| Push origin       | Your **native host OS** (Windows/Mac/Linux), **not** a VM                                 |
+| Post-push access  | SSH from Alpine, once CORE/EDGE have IPs                                                  |
 
 ### B4 — Intended NAT Design
 
@@ -153,9 +153,9 @@ You cannot reason about "what's broken" until you know "what's actually there." 
    ```powershell
    scp cisco@192.0.2.69:configs/lab12.zip Desktop\
    ```
-   This one archive contains everything you need for provisioning: the templated device configs (`lab12-core-set1.cfg`, `lab12-edge-set1.cfg`), `day0_provision.py` and its support files, and `day0-lab12.yaml`. You are **not** hand-editing any of these files — `day0_provision.py` performs the placeholder substitution itself when it renders and pushes the configuration.
-4. **Extract `lab12.zip` on your Desktop**, then follow **`day0-provision-guide.md`** to run the provisioning script for **both CORE and EDGE**. That guide covers installing requirements, finding the extracted folder, and the exact command to run — follow it now before continuing, then come back here.
-5. Once both devices report a successful push (SSH reachable, expected interface address present), **switch to your Alpine VM over the network** for everything else — SSH-based diagnosis and all remaining checkpoints.
+   This one archive contains everything you need for provisioning: the templated device configs (`lab12-core-set1.cfg`, `lab12-edge-set1.cfg`), `day0_provision.py` and its support files, and **`l12-base.yaml`** (the C00 evidence-collection config). You are **not** hand-editing any of these files — `day0_provision.py` performs the placeholder substitution itself when it renders and pushes the configuration.
+4. **Extract `lab12.zip` on your Desktop**, then follow [`day0-provision-guide.md`](../resources/day0-provision-guide.md) to run the provisioning script for **both CORE and EDGE**. That guide covers the installation requirements, locating the extracted folder, and the exact command to run — follow it now before continuing, then return here.
+5. **Unlike previous labs, `x_remote.py` also runs from Windows this time** — not from Alpine. `x_remote.py` is already on your Desktop (already installed, requirements already in place from earlier labs). Only its config file, `l12-base.yaml`, is in the extracted `lab12` folder. Once both devices report a successful push (SSH reachable, expected interface address present), collect C00 evidence now (see C00 — Collection of Information, below) before switching to Alpine for everything else — SSH-based diagnosis and all remaining checkpoints.
 6. SSH into each device to confirm access:
    ```bash
    ssh admin@203.0.113.U    # EDGE — use your own U in place of the placeholder
@@ -172,7 +172,7 @@ You cannot reason about "what's broken" until you know "what's actually there." 
    ping <CORE transit address, from EDGE>
    ping <EDGE transit address, from CORE>
    ```
-9. **Connect the PC pool host and the server/VM host.** These are reused from Lab 11 — if either one still has a **static** IP left over from that lab, change its network adapter setting to **obtain an IP address automatically (DHCP)** before continuing. CORE is now the DHCP server for both networks; you do not hand-configure an address on either device. From CORE, confirm what each one actually received:
+9. **Connect the PC pool host and the server/VM host.** Change its network adapter setting to **obtain an IP address automatically (DHCP)** before continuing. CORE is now the DHCP server for both networks; you do not hand-configure an address on either device. From CORE, confirm what each one actually received:
    ```text
    show ip dhcp binding
    ```
@@ -199,28 +199,29 @@ show ip dhcp binding
 | ------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
 | Push completion           | `day0_provision.py` reports both devices provisioned, verify checks pass                               | Push errors or verify checks fail                                                                                                    |
 | Interface state           | Every configured interface shows **up, up** in `show ip interface brief`                               | Any interface shows `down` or `administratively down`                                                                                |
-| SSH reachability          | Alpine can SSH to both CORE (`198.18.U.22`) and EDGE (`203.0.113.U`) with `admin/cisco`                | Connection refused/timeout, or credentials rejected                                                                                  |
+| SSH reachability          | PC can SSH to both CORE (`198.18.U.22`) and EDGE (`203.0.113.U`) with `admin/cisco`                    | Connection refused/timeout, or credentials rejected                                                                                  |
 | Addressing table (B2)     | Fully populated from live `show` output, matches what's actually configured                            | Table left blank, or filled from assumption instead of discovery                                                                     |
 | Transit-link reachability | CORE and EDGE ping each other successfully                                                             | Ping fails (this would indicate a routing/addressing problem, which is out of scope for this fault set — flag it to your instructor) |
 | DHCP bindings             | `show ip dhcp binding` on CORE shows a leased address for both the PC pool host and the server/VM host | One or both hosts missing from the binding table — check cabling and that the host is actually requesting DHCP                       |
 
 #### Troubleshooting
 
-If the push fails or SSH doesn't come up afterward: see the Troubleshooting section of `day0-provision-guide.md` in `resources/` before re-running the script.
+If the push fails or SSH doesn't come up afterward: see the Troubleshooting section of [`day0-provision-guide.md`](../resources/day0-provision-guide.md) before re-running the script.
 
 If an end device has no DHCP binding: confirm it's cabled to the right port and set to obtain an address automatically — you are not assigning it a static IP.
 
 #### C00 — Collection of Information
 
-C00 is collected automatically — you are not hand-copying prompts for this checkpoint.
+C00 is collected automatically — you are not hand-copying prompts for this checkpoint. **Unlike previous labs, this runs from Windows, not Alpine.** `x_remote.py` is already on your Desktop. Its config file for this checkpoint, `l12-base.yaml`, is in the `lab12` folder you extracted to your Desktop in step 4.
 
-1. On your Alpine VM, get `l12-base.yaml` from the lab's `yaml/` folder (same place you got it for previous labs).
-2. Open it and replace `{U}` and `{USERNAME}` with your own U number and username. It already targets CORE (`198.18.{U}.22`) and EDGE (`203.0.113.{U}`) with the `admin`/`cisco` credentials from C00 step 6, and it collects the interface, route, SSH, TCP, and DHCP binding evidence in one pass.
-3. Run it:
-   ```bash
-   python x_remote.py l12-base.yaml
+1. Open `Desktop\lab12\l12-base.yaml` and replace `{U}` and `{USERNAME}` with your own U number and username. It already targets CORE (`198.18.{U}.22`) and EDGE (`203.0.113.{U}`) with the `admin`/`cisco` credentials from C00 step 6, and it collects the interface, route, SSH, TCP, and DHCP binding evidence in one pass.
+2. From your **Desktop** (where `x_remote.py` already lives), point it at that config file:
+   ```powershell
+   cd Desktop
+   python x_remote.py lab12\l12-base.yaml
    ```
-4. Confirm the run produced `l12-base-{username}.txt` with output for both CORE and EDGE, and that the DHCP binding output shows a leased address for the PC pool host and the server/VM host — you'll need both addresses for the trouble tickets below.
+3. Confirm the run produced `l12-base-{username}.txt` **on your Desktop** (`x_remote.py` writes its output next to itself, not into the `lab12` folder) with output for both CORE and EDGE, and that the DHCP binding output shows a leased address for the PC pool host and the server/VM host — you'll need both addresses for the trouble tickets below.
+4. Move on to Alpine only after this file exists — everything from here on (C01–C04) is SSH-based diagnosis from Alpine, as in previous labs.
 
 #### Sample Output Block
 
