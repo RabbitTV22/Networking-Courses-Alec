@@ -148,7 +148,7 @@ You cannot reason about "what's broken" until you know "what's actually there." 
 #### Action
 
 1. **Cable the topology** per the physical diagram in B1.
-2. **Set your PC's network settings** to the Remote/professor network (`203.0.113.U/24`, gateway `203.0.113.254`) — this is only so your PC itself can reach the TFTP server, independent of router state.
+2. **Set your PC's network settings** to the Remote/professor network (`203.0.113.45/24`, gateway `203.0.113.254`) — this is only so your PC itself can reach the TFTP server, independent of router state.
 3. Download **`lab12.zip`** from the TFTP server to your **Desktop (Windows)**:
    ```powershell
    scp cisco@192.0.2.69:configs/lab12.zip Desktop\
@@ -158,8 +158,8 @@ You cannot reason about "what's broken" until you know "what's actually there." 
 5. **Unlike previous labs, `x_remote.py` also runs from Windows this time** — not from Alpine. `x_remote.py` is already on your Desktop (already installed, requirements already in place from earlier labs). Only its config file, `l12-base.yaml`, is in the extracted `lab12` folder. Once both devices report a successful push (SSH reachable, expected interface address present), collect C00 evidence now (see C00 — Collection of Information, below) before switching to Alpine for everything else — SSH-based diagnosis and all remaining checkpoints.
 6. SSH into each device to confirm access:
    ```bash
-   ssh admin@203.0.113.U    # EDGE — use your own U in place of the placeholder
-   ssh admin@198.18.U.22    # CORE
+   ssh admin@203.0.113.45    # EDGE — use your own U in place of the placeholder
+   ssh admin@198.18.45.22    # CORE
    ```
    Credentials for both devices: username **admin**, password **cisco**. Once logged in, `enable` password **class**. (These are fixed, known credentials for this lab — not a secret you need to look up.)
 7. Run discovery commands on **both** devices and fill in the addressing table in B2:
@@ -199,7 +199,7 @@ show ip dhcp binding
 | ------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
 | Push completion           | `day0_provision.py` reports both devices provisioned, verify checks pass                               | Push errors or verify checks fail                                                                                                    |
 | Interface state           | Every configured interface shows **up, up** in `show ip interface brief`                               | Any interface shows `down` or `administratively down`                                                                                |
-| SSH reachability          | PC can SSH to both CORE (`198.18.U.22`) and EDGE (`203.0.113.U`) with `admin/cisco`                    | Connection refused/timeout, or credentials rejected                                                                                  |
+| SSH reachability          | PC can SSH to both CORE (`198.18.45.22`) and EDGE (`203.0.113.45`) with `admin/cisco`                    | Connection refused/timeout, or credentials rejected                                                                                  |
 | Addressing table (B2)     | Fully populated from live `show` output, matches what's actually configured                            | Table left blank, or filled from assumption instead of discovery                                                                     |
 | Transit-link reachability | CORE and EDGE ping each other successfully                                                             | Ping fails (this would indicate a routing/addressing problem, which is out of scope for this fault set — flag it to your instructor) |
 | DHCP bindings             | `show ip dhcp binding` on CORE shows a leased address for both the PC pool host and the server/VM host | One or both hosts missing from the binding table — check cabling and that the host is actually requesting DHCP                       |
@@ -214,7 +214,7 @@ If an end device has no DHCP binding: confirm it's cabled to the right port and 
 
 C00 is collected automatically — you are not hand-copying prompts for this checkpoint. **Unlike previous labs, this runs from Windows, not Alpine.** `x_remote.py` is already on your Desktop. Its config file for this checkpoint, `l12-base.yaml`, is in the `lab12` folder you extracted to your Desktop in step 4.
 
-1. Open `Desktop\lab12\l12-base.yaml` and replace `{U}` and `{USERNAME}` with your own U number and username. It already targets CORE (`198.18.{U}.22`) and EDGE (`203.0.113.{U}`) with the `admin`/`cisco` credentials from C00 step 6, and it collects the interface, route, SSH, TCP, and DHCP binding evidence in one pass.
+1. Open `Desktop\lab12\l12-base.yaml` and replace `45` and `{USERNAME}` with your own U number and username. It already targets CORE (`198.18.45.22`) and EDGE (`203.0.113.45`) with the `admin`/`cisco` credentials from C00 step 6, and it collects the interface, route, SSH, TCP, and DHCP binding evidence in one pass.
 2. From your **Desktop** (where `x_remote.py` already lives), point it at that config file:
    ```powershell
    cd Desktop
@@ -403,8 +403,8 @@ A pool can exist, be correctly referenced, and still be wrong — if its address
 There is no separate host for this network — the loopback address lives directly on CORE. Because there's only one device available here, use **two different protocols** instead of two different devices, both sourced from the loopback interface:
 
 ```text
-{username}-CORE# ping 192.0.2.69 source Loopback{U}
-{username}-CORE# telnet 192.0.2.69 80 /source-interface Loopback{U}
+{username}-CORE# ping 192.0.2.69 source Loopback45
+{username}-CORE# telnet 192.0.2.69 80 /source-interface Loopback45
 ```
 
 (The `telnet ... 80` is just a raw TCP reachability probe — you're not expecting a real HTTP session, only checking whether the TCP connection attempt itself completes.)
@@ -438,7 +438,7 @@ show ip nat pool <name>
 show access-list <the ACL number bound to this rule>
 ```
 
-Plus the ping and telnet probe from CORE sourced from `Loopback{U}` (two entries, ICMP and TCP/80).
+Plus the ping and telnet probe from CORE sourced from `Loopback45` (two entries, ICMP and TCP/80).
 
 Add a comment line stating what was wrong and what you changed, e.g.:
 
