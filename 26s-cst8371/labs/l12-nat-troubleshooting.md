@@ -95,9 +95,9 @@ For orientation, the topology has:
 
 - **CORE** — the inside router. Connects the PC pool network, the server/VM-host network, and a private loopback network to the rest of the pod.
 - **EDGE** — the outside/public-facing router. Connects to the Remote tester (professor network) and carries all NAT configuration for this pod.
-- **PC pool host** — an inside host used to test Trouble Ticket 3 (PC pool dynamic PAT pool rule). Gets its IP via **DHCP from CORE**.
-- **Server/VM host** — an inside host used to test Trouble Ticket 1 (server/VM PAT-to-exit-interface rule). Gets its IP via **DHCP from CORE**.
-- **Private loopback network** — lives entirely on CORE's own loopback interface; there is no separate physical host for it. Traffic for Trouble Ticket 2 is generated directly from CORE, sourced from that loopback address.
+- **PC pool host** — an inside host used to test C04 (PC pool dynamic PAT pool rule). Gets its IP via **DHCP from CORE**.
+- **Server/VM host** — an inside host used to test C02 (server/VM PAT-to-exit-interface rule). Gets its IP via **DHCP from CORE**.
+- **Private loopback network** — lives entirely on CORE's own loopback interface; there is no separate physical host for it. Traffic for C03 is generated directly from CORE, sourced from that loopback address.
 - **Remote tester** — external to the pod, standing in for "the Internet."
 
 ### B2 — Addressing Table
@@ -126,6 +126,13 @@ For orientation, the topology has:
 You cannot recognize a deviation if you don't know what "correct" looks like. This is the **design intention** for NAT on EDGE — what a correctly working configuration would accomplish. It is not a copy of the live configuration, and it will not tell you which specific fault is present in your pod. Use it as the reference point you check the live device against in the trouble tickets (C01–C04), following the method in A3.
 
 - **Device and interfaces (A3 step 1).** EDGE has one inside-facing interface (the transit link toward CORE) and one outside-facing interface (the link toward the Remote tester). The inside-facing interface should be marked `ip nat inside`, and the outside-facing interface should be marked `ip nat outside`.
+- **Pod's assigned public NAT block.** This is the range your NAT pools are allowed to draw from — distinct from the outside interface's own subnet. Any pool whose range falls outside it is invalid, even if the pool exists and is correctly referenced by a rule:
+
+  ```
+  - Public NAT block: 209.10.{U}.0/28
+  - NAT_POOL_PC allocation: 209.10.{U}.2–209.10.{U}.6/29
+  - NAT_POOL_LOOP allocation: 209.10.{U}.10–209.10.{U}.14/28
+  ```
 - **NAT Rule 1 — PAT for the server/VM subnet.** Traffic from the server/VM network should be selected by an ACL that matches that subnet's real address range, then translated dynamically through the outside interface with PAT (`overload`) so the subnet's host can share the router's public address.
 - **NAT Rule 2 — PAT for the private loopback network.** Traffic from the loopback network should be selected by an ACL that matches that subnet's real address range, then translated dynamically through a **named pool** whose address range falls inside the pod's actual assigned public block, with `overload`.
 - **NAT Rule 3 — PAT for the PC pool network.** Traffic from the PC pool network should be selected by an ACL that matches that subnet's real address range, then translated dynamically through **its own, correctly named** pool — distinct from Rule 2's pool — with `overload`, so multiple PC pool hosts can share it.
