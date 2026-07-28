@@ -129,9 +129,9 @@ You cannot recognize a deviation if you don't know what "correct" looks like. Th
 - **Pod's assigned public NAT block.** This is the range your NAT pools are allowed to draw from — distinct from the outside interface's own subnet. Any pool whose range falls outside it is invalid, even if the pool exists and is correctly referenced by a rule:
 
   ```
-  - Public NAT block: 209.10.{U}.0/28
-  - NAT_POOL_PC allocation: 209.10.{U}.2–209.10.{U}.6/29
-  - NAT_POOL_LOOP allocation: 209.10.{U}.10–209.10.{U}.14/28
+  - Public NAT block: 209.10.45.0/28
+  - NAT_POOL_PC allocation: 209.10.45.2–209.10.45.6/29
+  - NAT_POOL_LOOP allocation: 209.10.45.10–209.10.45.14/28
   ```
 - **NAT Rule 1 — PAT for the server/VM subnet.** Traffic from the server/VM network should be selected by an ACL that matches that subnet's real address range, then translated dynamically through the outside interface with PAT (`overload`) so the subnet's host can share the router's public address.
 - **NAT Rule 2 — PAT for the private loopback network.** Traffic from the loopback network should be selected by an ACL that matches that subnet's real address range, then translated dynamically through a **named pool** whose address range falls inside the pod's actual assigned public block, with `overload`.
