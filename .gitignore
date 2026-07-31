@@ -154,5 +154,6 @@ data/~$grading_scheme_template.xlsx
 *.bak
 *.tmp
 
-# local convenience symlink to the active semester (not for students)
+# local convenience symlink to the active and last semester (not for students)
 /current
+/previous
