@@ -101,7 +101,7 @@ All three inside networks are carved from a single block, `192.168.45.0/24`, by 
 | -------------------------- | ----------------- | ----------------- | ------------ | -------------------------------- |
 | PC subnet                  | `192.168.45.0/26`  | `255.255.255.192` | `.1`–`.62`   | `192.168.45.1` (CORE Gi0/0/0)     |
 | Server/VM subnet           | `192.168.45.64/27` | `255.255.255.224` | `.65`–`.94`  | `192.168.45.65` (CORE Gi0/0/2)    |
-| Loopback (private network) | `192.168.45.96/28` | `255.255.255.240` | `.97`–`.110` | `192.168.45.97` (CORE Loopback U) |
+| Loopback (private network) | `192.168.45.96/28` | `255.255.255.240` | `.97`–`.110` | `192.168.45.97` (CORE Loopback 45) |
 
 | Device | Interface | IP Address (CIDR) | Description |
 |---|---|---|---|
@@ -110,7 +110,7 @@ All three inside networks are carved from a single block, `192.168.45.0/24`, by 
 | **CORE** | Gi0/0/0 | `192.168.45.1/26` | PC subnet gateway |
 | **CORE** | Gi0/0/1 | `198.18.45.22/29` | OSPF neighbor to EDGE |
 | **CORE** | Gi0/0/2 | `192.168.45.65/27` | Server/VM subnet gateway |
-| **CORE** | Loopback U | `192.168.45.97/28` | Private loopback network |
+| **CORE** | Loopback 45 | `192.168.45.97/28` | Private loopback network |
 | **PC** | — | DHCP from `192.168.45.0/26` | The PC subnet test host, served by CORE |
 | **Alpine** | — | DHCP from `192.168.45.64/27` | The server/VM subnet test host, served by CORE. Also your usual SSH client VM — it plays both roles this lab. |
 | **Remote** | — (gateway) | `203.0.113.254` | External tester |
@@ -138,10 +138,10 @@ All three inside networks are carved from a single block, `192.168.45.0/24`, by 
 | Router-IDs | EDGE = `45.0.0.17`, CORE = `45.0.0.22` |
 | Default route | Originated on EDGE (`default-information originate`), advertised via OSPF so CORE learns `0.0.0.0/0` |
 | DR election | **EDGE** wins on the transit link (interface priority `45` on EDGE's Gi0/0/1) |
-| Passive interfaces | All interfaces not directly connected to an OSPF neighbor<br>Explicitly include CORE's `Loopback U` in the passive set |
+| Passive interfaces | All interfaces not directly connected to an OSPF neighbor<br>Explicitly include CORE's `Loopback 45` in the passive set |
 | Excluded from OSPF | EDGE's `Gi0/0/0` (outside/public interface) — not declared in the OSPF process at all, not even as passive |
 | Reference bandwidth | `10000 Mbps` on both routers |
-| Convergence tuning | Transit link (`198.18.45.16/29`) uses `hello 5`/`dead 20`, matching on both ends<br>CORE's `Loopback U` uses OSPF network type `point-to-point`<br>CORE's PC- and server/VM-facing interfaces never become DR (priority `0`) |
+| Convergence tuning | Transit link (`198.18.45.16/29`) uses `hello 5`/`dead 20`, matching on both ends<br>CORE's `Loopback 45` uses OSPF network type `point-to-point`<br>CORE's PC- and server/VM-facing interfaces never become DR (priority `0`) |
 
 ### B5 — Intended NAT Design (Your Work — C02)
 
@@ -153,7 +153,7 @@ This lab uses **one NAT rule** covering all three inside networks at once — a 
 | Pool name   | `{username}-POOL` — literally your own username, not a placeholder                                                                                                                                    |
 | Pool range  | The **first 6 usable addresses** of `209.10.45.0/28` — calculate this yourself. |
 | Pool mask   | `255.255.255.240` (`/28`) — matches the pod's actual assigned block, even though only 6 of its 14 usable addresses go in this pool. Don't narrow it to a `/29`; that would describe a smaller allocation that was never actually carved out. |
-| Translation | `ip nat inside source list U pool {username}-POOL overload`                                                                                                                                           |
+| Translation | `ip nat inside source list 45 pool {username}-POOL overload`                                                                                                                                           |
 
 All NAT configuration lives on EDGE; CORE carries no NAT commands.
 
@@ -242,7 +242,7 @@ The last command runs on **EDGE**, targeting the interface that's deliberately e
 | Router-ID | Matches B4 | Auto-selected |
 | DR | EDGE wins on the transit link | Wrong device elected |
 | Default route | `0.0.0.0/0` on CORE via OSPF | Missing |
-| Passive interfaces | All non-neighbor interfaces marked passive, including `Loopback U` | Any active unnecessarily, or loopback left non-passive |
+| Passive interfaces | All non-neighbor interfaces marked passive, including `Loopback 45` | Any active unnecessarily, or loopback left non-passive |
 | EDGE Gi0/0/0 | `show ip ospf interface GigabitEthernet0/0/0` on EDGE returns nothing | Any output at all — even a passive listing means it's still in the process |
 | Timers | `hello 5`/`dead 20` on both ends of the transit link | Mismatched or default values |
 
@@ -311,7 +311,7 @@ Filtering with `| include <address>` (use the specific host's own inside-local I
 
 ```text
 show ip nat statistics
-show ip access-list U
+show ip access-list 45
 show ip nat pool {username}-POOL
 ```
 
@@ -323,13 +323,13 @@ show ip nat pool {username}-POOL
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | Translation evidence  | Each of the 8 tested flows has a matching entry captured at the time you ran it (the table may also show other/unrelated entries — that's fine) | Any of the 8 tested flows has no matching entry when you looked      |
 | NAT statistics — Hits | ≥ 8                                                                                                                                             | 0 hits                                                               |
-| ACL U                 | Single ACE, `192.168.45.0 0.0.0.255`, hits ≥ 8 (informational — verify against NAT statistics if this shows 0 despite working translations)      | Multiple ACEs, or wrong network/wildcard                             |
+| ACL 45                | Single ACE, `192.168.45.0 0.0.0.255`, hits ≥ 8 (informational — verify against NAT statistics if this shows 0 despite working translations)      | Multiple ACEs, or wrong network/wildcard                             |
 | Pool range            | Matches the first 6 usable addresses of `209.10.45.0/28`, correctly calculated                                                                   | Includes the network or broadcast address, or otherwise miscounted   |
 | Pool mask             | `/28` — matches the pod's real assigned block                                                                                                   | Narrowed to `/29` or otherwise mismatched from the actual allocation |
 
 #### Troubleshooting
 
-If some flows translate and others don't: confirm the wildcard mask on ACL U is `0.0.0.255` (the full `/24`), not something narrower that accidentally excludes one of the three sub-blocks.
+If some flows translate and others don't: confirm the wildcard mask on ACL 45 is `0.0.0.255` (the full `/24`), not something narrower that accidentally excludes one of the three sub-blocks.
 
 If nothing translates: confirm `ip nat inside`/`ip nat outside` are on the correct EDGE interfaces.
 
@@ -348,7 +348,7 @@ In `l13-nat-{username}.txt`, create:
 | Device prompt & command | Include device name and exact command |
 | NAT translations | The captured-as-you-go translation entries for all 8 tests, including the ping outputs from both PC and Alpine |
 | NAT statistics | `show ip nat statistics` — hits ≥ 8 |
-| ACL U | `show ip access-list U` |
+| ACL 45 | `show ip access-list 45` |
 | Pool | `show ip nat pool {username}-POOL` |
 | Comment | e.g. `!-- Single NAT rule, one ACE covering the whole /24; PC and server/VM traffic confirmed via all 8 tests in the translation table (loopback coverage confirmed by ACL/config inspection, not traffic — no host originates from it in this lab).` |
 
