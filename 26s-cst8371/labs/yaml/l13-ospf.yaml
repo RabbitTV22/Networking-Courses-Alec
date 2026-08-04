@@ -1,0 +1,56 @@
+# 26S-CST8371 - Lab 13 - C01 OSPF Verification
+# Collect verification commands after completing OSPF setup (C01)
+# Used with x_remote.py
+# https://github.com/ayalac1111/x-remote
+#
+# Replace {USERNAME} with your username
+# Replace {U} with your U number
+
+output_file: l13-ospf-{USERNAME}.txt
+
+devices:
+  - device_info:
+      device_type: cisco_xe
+      ip: 203.0.113.{U}        # EDGE
+      username: admin
+      password: cisco
+    commands:
+      # --- OSPF Global Configs
+      - show ip protocols
+      - show ip ospf | include Reference
+      # --- OSPF Neighbour, DR election and interface enable
+      - show ip ospf neighbor
+      - show ip ospf interface brief
+      # --- Confirm Gi0/0/0 does NOT appear in the OSPF process
+      # ANSWER KEY NOTE: correct output for this command is EMPTY — IOS
+      # prints nothing for "show ip ospf interface <if>" when that interface
+      # isn't in any OSPF process. Any output at all (including a passive
+      # listing) is a fail for this checkpoint.
+      - show ip ospf interface GigabitEthernet0/0/0
+      # --- Default Route Origination
+      - show ip route static | begin Gateway
+      # --- OSPF Interface Configuration (transit link)
+      - show ip ospf interface GigabitEthernet0/0/1 | include Timer|Router ID|Priority
+      # --- Services
+      - show ip ssh
+      - show ntp associations
+
+  - device_info:
+      device_type: cisco_xe
+      ip: 198.18.{U}.22        # CORE
+      username: admin
+      password: cisco
+    commands:
+      # --- OSPF Global Configs
+      - show ip protocols
+      - show ip ospf | include Reference
+      # --- OSPF interface enable and passive interfaces
+      - show ip ospf interface brief
+      # --- OSPF Interface Configuration (transit link + loopback)
+      - show ip ospf interface GigabitEthernet0/0/1 | include Timer|Priority
+      - show ip ospf interface Loopback{U} | include Timer|Passive
+      # --- OSPF Routes (must include the default from EDGE)
+      - show ip route ospf
+      # --- Services
+      - show ip ssh
+      - show ntp associations
