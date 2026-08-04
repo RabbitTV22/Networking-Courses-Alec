@@ -6,7 +6,7 @@
 
 ### A1 — Overview
 
-This lab reuses the EDGE/CORE topology from Lab 11/12, with one change: all three inside networks now live inside a single block, `192.168.U.0/24`, carved by VLSM into a `/26`, a `/27`, and a `/28`. `day0_provision.py` pushes only the floor: addressing, NTP, DHCP for the PC and server/VM networks, and SSH. **OSPF and NAT are your work this lab, not the provisioner's** — you're building both from the ground up before layering three named extended ACLs on top.
+This lab reuses the EDGE/CORE topology from Lab 11/12, with one change: all three inside networks now live inside a single block, `192.168.45.0/24`, carved by VLSM into a `/26`, a `/27`, and a `/28`. `day0_provision.py` pushes only the floor: addressing, NTP, DHCP for the PC and server/VM networks, and SSH. **OSPF and NAT are your work this lab, not the provisioner's** — you're building both from the ground up before layering three named extended ACLs on top.
 
 This is deliberately a full-stack rebuild: routing, then translation, then filtering, each depending on the one before it working correctly. Nothing is handed to you pre-verified except basic reachability and addressing.
 
@@ -95,24 +95,24 @@ Every ACE in C03–C05 includes `log`. The bonus is earned by including matching
 
 ### B2 — Addressing Table
 
-All three inside networks are carved from a single block, `192.168.U.0/24`, by VLSM:
+All three inside networks are carved from a single block, `192.168.45.0/24`, by VLSM:
 
 | Network                    | Block             | Mask              | Usable Range | Gateway                          |
 | -------------------------- | ----------------- | ----------------- | ------------ | -------------------------------- |
-| PC subnet                  | `192.168.U.0/26`  | `255.255.255.192` | `.1`–`.62`   | `192.168.U.1` (CORE Gi0/0/0)     |
-| Server/VM subnet           | `192.168.U.64/27` | `255.255.255.224` | `.65`–`.94`  | `192.168.U.65` (CORE Gi0/0/2)    |
-| Loopback (private network) | `192.168.U.96/28` | `255.255.255.240` | `.97`–`.110` | `192.168.U.97` (CORE Loopback U) |
+| PC subnet                  | `192.168.45.0/26`  | `255.255.255.192` | `.1`–`.62`   | `192.168.45.1` (CORE Gi0/0/0)     |
+| Server/VM subnet           | `192.168.45.64/27` | `255.255.255.224` | `.65`–`.94`  | `192.168.45.65` (CORE Gi0/0/2)    |
+| Loopback (private network) | `192.168.45.96/28` | `255.255.255.240` | `.97`–`.110` | `192.168.45.97` (CORE Loopback U) |
 
 | Device | Interface | IP Address (CIDR) | Description |
 |---|---|---|---|
-| **EDGE** | Gi0/0/0 | `203.0.113.U/24` | Outside interface to REMOTE — **does not participate in OSPF** |
-| **EDGE** | Gi0/0/1 | `198.18.U.17/29` | OSPF neighbor to CORE |
-| **CORE** | Gi0/0/0 | `192.168.U.1/26` | PC subnet gateway |
-| **CORE** | Gi0/0/1 | `198.18.U.22/29` | OSPF neighbor to EDGE |
-| **CORE** | Gi0/0/2 | `192.168.U.65/27` | Server/VM subnet gateway |
-| **CORE** | Loopback U | `192.168.U.97/28` | Private loopback network |
-| **PC** | — | DHCP from `192.168.U.0/26` | The PC subnet test host, served by CORE |
-| **Alpine** | — | DHCP from `192.168.U.64/27` | The server/VM subnet test host, served by CORE. Also your usual SSH client VM — it plays both roles this lab. |
+| **EDGE** | Gi0/0/0 | `203.0.113.45/24` | Outside interface to REMOTE — **does not participate in OSPF** |
+| **EDGE** | Gi0/0/1 | `198.18.45.17/29` | OSPF neighbor to CORE |
+| **CORE** | Gi0/0/0 | `192.168.45.1/26` | PC subnet gateway |
+| **CORE** | Gi0/0/1 | `198.18.45.22/29` | OSPF neighbor to EDGE |
+| **CORE** | Gi0/0/2 | `192.168.45.65/27` | Server/VM subnet gateway |
+| **CORE** | Loopback U | `192.168.45.97/28` | Private loopback network |
+| **PC** | — | DHCP from `192.168.45.0/26` | The PC subnet test host, served by CORE |
+| **Alpine** | — | DHCP from `192.168.45.64/27` | The server/VM subnet test host, served by CORE. Also your usual SSH client VM — it plays both roles this lab. |
 | **Remote** | — (gateway) | `203.0.113.254` | External tester |
 | **TFTP server** | — | `192.0.2.69` | |
 | **DNS server** | — | `192.0.2.53` | |
@@ -134,14 +134,14 @@ All three inside networks are carved from a single block, `192.168.U.0/24`, by V
 
 | Item | Requirement |
 |---|---|
-| Process ID | `U` |
-| Router-IDs | EDGE = `U.0.0.17`, CORE = `U.0.0.22` |
+| Process ID | `45` |
+| Router-IDs | EDGE = `45.0.0.17`, CORE = `45.0.0.22` |
 | Default route | Originated on EDGE (`default-information originate`), advertised via OSPF so CORE learns `0.0.0.0/0` |
-| DR election | **EDGE** wins on the transit link (interface priority `U` on EDGE's Gi0/0/1) |
+| DR election | **EDGE** wins on the transit link (interface priority `45` on EDGE's Gi0/0/1) |
 | Passive interfaces | All interfaces not directly connected to an OSPF neighbor<br>Explicitly include CORE's `Loopback U` in the passive set |
 | Excluded from OSPF | EDGE's `Gi0/0/0` (outside/public interface) — not declared in the OSPF process at all, not even as passive |
 | Reference bandwidth | `10000 Mbps` on both routers |
-| Convergence tuning | Transit link (`198.18.U.16/29`) uses `hello 5`/`dead 20`, matching on both ends<br>CORE's `Loopback U` uses OSPF network type `point-to-point`<br>CORE's PC- and server/VM-facing interfaces never become DR (priority `0`) |
+| Convergence tuning | Transit link (`198.18.45.16/29`) uses `hello 5`/`dead 20`, matching on both ends<br>CORE's `Loopback U` uses OSPF network type `point-to-point`<br>CORE's PC- and server/VM-facing interfaces never become DR (priority `0`) |
 
 ### B5 — Intended NAT Design (Your Work — C02)
 
@@ -149,9 +149,9 @@ This lab uses **one NAT rule** covering all three inside networks at once — a 
 
 | Item        | Value                                                                                                                                                                                                 |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ACL         | Numbered `U` (standard), **one ACE**: `permit 192.168.U.0 0.0.0.255` — matches the whole `/24`, so it automatically covers the PC, server/VM, and loopback sub-blocks without listing them separately |
+| ACL         | Numbered `45` (standard), **one ACE**: `permit 192.168.45.0 0.0.0.255` — matches the whole `/24`, so it automatically covers the PC, server/VM, and loopback sub-blocks without listing them separately |
 | Pool name   | `{username}-POOL` — literally your own username, not a placeholder                                                                                                                                    |
-| Pool range  | The **first 6 usable addresses** of `209.10.U.0/28` — calculate this yourself. |
+| Pool range  | The **first 6 usable addresses** of `209.10.45.0/28` — calculate this yourself. |
 | Pool mask   | `255.255.255.240` (`/28`) — matches the pod's actual assigned block, even though only 6 of its 14 usable addresses go in this pool. Don't narrow it to a `/29`; that would describe a smaller allocation that was never actually carved out. |
 | Translation | `ip nat inside source list U pool {username}-POOL overload`                                                                                                                                           |
 
@@ -186,8 +186,8 @@ If addressing or DHCP is wrong at this stage, every checkpoint after it — OSPF
    Record both addresses — you'll need them for later checkpoints.
 5. SSH into both devices to confirm access:
    ```bash
-   ssh admin@203.0.113.U    # EDGE
-   ssh admin@198.18.U.22    # CORE — reachable directly over the transit link, no routing protocol needed yet
+   ssh admin@203.0.113.45    # EDGE
+   ssh admin@198.18.45.22    # CORE — reachable directly over the transit link, no routing protocol needed yet
    ```
 
 #### Verification
@@ -323,8 +323,8 @@ show ip nat pool {username}-POOL
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | Translation evidence  | Each of the 8 tested flows has a matching entry captured at the time you ran it (the table may also show other/unrelated entries — that's fine) | Any of the 8 tested flows has no matching entry when you looked      |
 | NAT statistics — Hits | ≥ 8                                                                                                                                             | 0 hits                                                               |
-| ACL U                 | Single ACE, `192.168.U.0 0.0.0.255`, hits ≥ 8 (informational — verify against NAT statistics if this shows 0 despite working translations)      | Multiple ACEs, or wrong network/wildcard                             |
-| Pool range            | Matches the first 6 usable addresses of `209.10.U.0/28`, correctly calculated                                                                   | Includes the network or broadcast address, or otherwise miscounted   |
+| ACL U                 | Single ACE, `192.168.45.0 0.0.0.255`, hits ≥ 8 (informational — verify against NAT statistics if this shows 0 despite working translations)      | Multiple ACEs, or wrong network/wildcard                             |
+| Pool range            | Matches the first 6 usable addresses of `209.10.45.0/28`, correctly calculated                                                                   | Includes the network or broadcast address, or otherwise miscounted   |
 | Pool mask             | `/28` — matches the pod's real assigned block                                                                                                   | Narrowed to `/29` or otherwise mismatched from the actual allocation |
 
 #### Troubleshooting
@@ -375,7 +375,7 @@ Devices in the VM subnet are **denied** access to the following remote services:
 - Web access (HTTP and HTTPS) to the remote web server at `192.0.2.80`
 - TFTP access to the remote server at `192.0.2.69`
 - SSH access to the remote server at `192.0.2.22`
-- ICMP echo requests (pings) to devices in the PC subnet (`192.168.U.0/26`)
+- ICMP echo requests (pings) to devices in the PC subnet (`192.168.45.0/26`)
 
 All other traffic is permitted, including access to internal infrastructure such as the CORE router.
 
@@ -392,14 +392,14 @@ Extended ACLs filter on source, destination, and port together, so — unlike La
 ```bash
 ip access-list extended POLICY-VM
  remark Block HTTP/HTTPS to remote web server
- deny tcp 192.168.U.64 0.0.0.31 host 192.0.2.80 eq 80 log
- deny tcp 192.168.U.64 0.0.0.31 host 192.0.2.80 eq 443 log
+ deny tcp 192.168.45.64 0.0.0.31 host 192.0.2.80 eq 80 log
+ deny tcp 192.168.45.64 0.0.0.31 host 192.0.2.80 eq 443 log
  remark Block TFTP to remote server
- deny udp 192.168.U.64 0.0.0.31 host 192.0.2.69 eq 69 log
+ deny udp 192.168.45.64 0.0.0.31 host 192.0.2.69 eq 69 log
  remark Block SSH to remote server
- deny tcp 192.168.U.64 0.0.0.31 host 192.0.2.22 eq 22 log
+ deny tcp 192.168.45.64 0.0.0.31 host 192.0.2.22 eq 22 log
  remark Block ICMP echo to PC subnet
- deny icmp 192.168.U.64 0.0.0.31 192.168.U.0 0.0.0.63 echo log
+ deny icmp 192.168.45.64 0.0.0.31 192.168.45.0 0.0.0.63 echo log
  remark Permit all other traffic
  permit ip any any log
 !
@@ -422,7 +422,7 @@ Test every ACE — most of these are tests you already ran at C02, so you alread
 | TFTP to TFTP server | `tftp -p -l <file> 192.0.2.69` | ✅ Allowed | ❌ Denied |
 | SSH to SSH server | `ssh admin@192.0.2.22` | ✅ Allowed | ❌ Denied |
 | ICMP to PC subnet | `ping <PC's DHCP address>` | *(not tested at C02)* | ❌ Denied |
-| Access to CORE (internal, not in the deny list) | `ping 192.168.U.65` (own gateway) or `ssh admin@198.18.U.22` | — | ✅ Allowed |
+| Access to CORE (internal, not in the deny list) | `ping 192.168.45.65` (own gateway) or `ssh admin@198.18.45.22` | — | ✅ Allowed |
 
 **Diagnostic note:** if something you expect to still be allowed fails instead, check `show ip access-lists POLICY-VM` first — if the `permit ip any any` line shows 0 hits, the ACL dropped it. Only if the ACL shows a hit but `show ip nat translations` has no corresponding entry is this a NAT problem. You already proved NAT works at C02, so start with the ACL.
 
@@ -502,9 +502,9 @@ ip access-list extended POLICY-PC
  remark Block DNS from this specific host
  deny udp host <PC-address> host 192.0.2.53 eq 53 log
  remark Block HTTP to TFTP server address
- deny tcp 192.168.U.0 0.0.0.63 host 192.0.2.69 eq 80 log
+ deny tcp 192.168.45.0 0.0.0.63 host 192.0.2.69 eq 80 log
  remark Block HTTPS to web server address
- deny tcp 192.168.U.0 0.0.0.63 host 192.0.2.80 eq 443 log
+ deny tcp 192.168.45.0 0.0.0.63 host 192.0.2.80 eq 443 log
  remark Permit all other traffic
  permit ip any any log
 !
@@ -579,12 +579,12 @@ Design, place, and verify an extended ACL that filters traffic **entering** the 
 
 #### Why This Matters
 
-C03 and C04 filtered outbound traffic close to its source. This policy filters inbound traffic close to its destination — EDGE itself. Only EDGE's public interface is reachable from outside without NAT; none of the `198.18.U.x` or inside addresses are exposed inbound in this lab. Protecting the router's own management plane from the Internet is one of the highest-value, most common real-world uses of an edge-facing extended ACL.
+C03 and C04 filtered outbound traffic close to its source. This policy filters inbound traffic close to its destination — EDGE itself. Only EDGE's public interface is reachable from outside without NAT; none of the `198.18.45.x` or inside addresses are exposed inbound in this lab. Protecting the router's own management plane from the Internet is one of the highest-value, most common real-world uses of an edge-facing extended ACL.
 
 #### Security Policy Statement
 
 External hosts are denied:
-- SSH (TCP/22) to EDGE's public interface (`203.0.113.U`)
+- SSH (TCP/22) to EDGE's public interface (`203.0.113.45`)
 - ICMP echo **requests** to EDGE's public interface
 
 All other inbound traffic remains permitted — critically, this includes ICMP **echo-replies**, a different ICMP type than `echo` (request). That distinction is what keeps every outbound-initiated flow from C02–C04 working even after this policy is applied.
@@ -600,9 +600,9 @@ All other inbound traffic remains permitted — critically, this includes ICMP *
 ```bash
 ip access-list extended POLICY-EXTERNAL
  remark Block inbound SSH to the EDGE public interface
- deny tcp any host 203.0.113.U eq 22 log
+ deny tcp any host 203.0.113.45 eq 22 log
  remark Block inbound ICMP echo requests to the EDGE public interface
- deny icmp any host 203.0.113.U echo log
+ deny icmp any host 203.0.113.45 echo log
  remark Permit all other traffic
  permit ip any any log
 !
@@ -612,12 +612,12 @@ interface GigabitEthernet0/0/0
 
 #### Verification
 
-**Ask a classmate or your instructor to test from an external host** — you can't verify inbound filtering from behind your own NAT boundary. Have them run, targeting your `203.0.113.U`:
+**Ask a classmate or your instructor to test from an external host** — you can't verify inbound filtering from behind your own NAT boundary. Have them run, targeting your `203.0.113.45`:
 
 | Test | Command (from an external host) | Expected |
 |---|---|---|
-| SSH to EDGE | `ssh admin@203.0.113.U` | ❌ Denied |
-| Ping to EDGE | `ping 203.0.113.U` | ❌ Denied (blocks the echo *request*) |
+| SSH to EDGE | `ssh admin@203.0.113.45` | ❌ Denied |
+| Ping to EDGE | `ping 203.0.113.45` | ❌ Denied (blocks the echo *request*) |
 
 From **Alpine** (re-run one of the outbound tests from C02/C03 to confirm this new inbound policy doesn't break outbound-initiated traffic — and to generate the permit hit below):
 
